@@ -212,7 +212,6 @@ const FilterDropdown = () => {
         }
       }, 'map'));
     } else {
-      // Filter the data before sending to Kepler.gl
       const filteredRows = originalData.rows.filter(row => 
         row[datasetInfo.fieldIndex] === type
       );
@@ -224,7 +223,6 @@ const FilterDropdown = () => {
         return;
       }
       
-      // Use the correct payload structure for updateVisData
       dispatch(updateVisData({
         datasets: [{
           info: {
