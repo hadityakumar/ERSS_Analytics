@@ -1,247 +1,265 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateVisData } from '@kepler.gl/actions';
+import { addFilter, setFilter, removeFilter } from '@kepler.gl/actions';
 import crimeTypesData from '../data/crimeTypes.json';
+
+const FILTER_FIELD_NAME = 'ahp_weighted_event_types_main_type';
 
 const FilterDropdown = () => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedType, setSelectedType] = useState('All Types');
 
-  // Use separate selectors to avoid object creation warnings
   const datasets = useSelector(state => state.keplerGl?.map?.visState?.datasets);
-  const filters = useSelector(state => state.keplerGl?.map?.visState?.filters);
+  const reduxFilters = useSelector(state => state.keplerGl?.map?.visState?.filters);
 
-  // Get crime types from JSON file
   const crimeTypes = crimeTypesData.crimeTypes;
 
-  // Store original data for filtering
-  const [originalData, setOriginalData] = useState(null);
-
-  // Memoized dataset info for counts and filtering
   const datasetInfo = useMemo(() => {
     if (!datasets || Object.keys(datasets).length === 0) {
       return null;
     }
-
     const datasetIds = Object.keys(datasets);
-    console.log('Available datasets:', datasetIds);
-    console.log('Available filters:', filters);
+    const targetDatasetId = datasetIds[0]; 
     
-    // Find the main crime dataset
-    const crimeDataset = datasetIds.find(id => 
-      id.includes('csv-data') || 
-      id.includes('Crime') || 
-      datasets[id].label?.includes('Crime') ||
-      datasets[id].label?.includes('Data')
-    ) || datasetIds[0];
-
-    console.log('Selected dataset for filtering:', crimeDataset);
-
-    if (!crimeDataset || !datasets[crimeDataset]) {
+    if (!targetDatasetId || !datasets[targetDatasetId]) {
       return null;
     }
-
-    const dataset = datasets[crimeDataset];
-    
-    // Access data through dataContainer instead of allData/data/filteredData
-    let actualData = null;
-    let dataCount = 0;
-    
-    if (dataset.dataContainer && dataset.dataContainer._rows) {
-      actualData = dataset.dataContainer._rows;
-      dataCount = actualData.length;
-      console.log('Using dataContainer._rows, count:', dataCount);
-    } else if (dataset.length > 0) {
-      // Alternative: use the dataset's getValue method to access data
-      actualData = [];
-      dataCount = dataset.length;
-      console.log('Using dataset.getValue method, count:', dataCount);
-      
-      // Create array representation for easier processing
-      for (let i = 0; i < Math.min(dataCount, 1000); i++) { // Limit to first 1000 for performance
-        const row = [];
-        dataset.fields.forEach(field => {
-          row[field.fieldIdx] = dataset.getValue(field.name, i);
-        });
-        actualData.push(row);
-      }
-    }
-
-    // Store original data once
-    if (actualData && !originalData) {
-      setOriginalData({
-        fields: dataset.fields,
-        rows: actualData
-      });
-    }
-
-    const field = dataset.fields?.find(
-      field => field.name === 'ahp_weighted_event_types_main_type'
-    );
-    const fieldIndex = dataset.fields?.findIndex(
-      field => field.name === 'ahp_weighted_event_types_main_type'
-    );
-
-    console.log('Crime type field:', field);
-    console.log('Crime type field index:', fieldIndex);
-    console.log('Available fields:', dataset.fields?.map(f => f.name) || []);
-    
-    if (actualData && actualData.length > 0) {
-      // Debug: Log some sample data
-      console.log('Dataset total rows:', dataCount);
-      console.log('First 5 rows of data:', actualData.slice(0, 5));
-      console.log('Sample values from crime type field:', 
-        actualData.slice(0, 10).map(row => row[fieldIndex])
-      );
-    }
-
+    const dataset = datasets[targetDatasetId];
     return {
-      datasetId: crimeDataset,
-      field,
-      fieldIndex,
-      data: actualData || [],
-      totalCount: dataCount,
-      dataset // Keep reference to the original dataset for getValue method
+      datasetId: targetDatasetId,
+      field: dataset.fields?.find(f => f.name === FILTER_FIELD_NAME),
+      fieldIndex: dataset.fields?.findIndex(f => f.name === FILTER_FIELD_NAME),
+      data: (dataset.dataContainer && dataset.dataContainer._rows) || [],
+      totalCount: (dataset.dataContainer && dataset.dataContainer._rows?.length) || 0,
+      dataset
     };
-  }, [datasets, filters, originalData]);
+  }, [datasets]);
 
-  // Memoized counts for each crime type
   const typeCounts = useMemo(() => {
-    if (!datasetInfo || datasetInfo.fieldIndex === -1 || !datasetInfo.data.length) {
-      console.log('Cannot calculate counts - missing data or field index');
-      return {};
-    }
-
-    console.log('Calculating counts for field index:', datasetInfo.fieldIndex);
-    console.log('Total data rows:', datasetInfo.data.length);
-
+    if (!datasetInfo || datasetInfo.fieldIndex === -1 || !datasetInfo.data?.length) return {};
     const counts = {};
-    
-    // If we have the original dataset, use its getValue method for better performance
-    if (datasetInfo.dataset && datasetInfo.dataset.getValue && datasetInfo.dataset.length > 0) {
-      console.log('Using dataset.getValue for counting');
-      
-      const fieldName = 'ahp_weighted_event_types_main_type';
-      const uniqueValues = new Set();
-      
-      // Sample some values first to see what we're working with
-      for (let i = 0; i < Math.min(datasetInfo.dataset.length, 100); i++) {
-        const value = datasetInfo.dataset.getValue(fieldName, i);
-        if (value !== null && value !== undefined && value !== '') {
-          uniqueValues.add(value);
+    crimeTypes.forEach(type => {
+      let count = 0;
+      if (datasetInfo.dataset && typeof datasetInfo.dataset.getValue === 'function' && datasetInfo.dataset.length > 0) {
+        for (let i = 0; i < datasetInfo.dataset.length; i++) {
+          if (datasetInfo.dataset.getValue(FILTER_FIELD_NAME, i) === type) count++;
         }
       }
-      
-      console.log('Sample unique values found:', Array.from(uniqueValues));
-      console.log('Crime types we are looking for:', crimeTypes);
-      
-      // Count each crime type
-      crimeTypes.forEach(type => {
-        let count = 0;
-        for (let i = 0; i < datasetInfo.dataset.length; i++) {
-          const value = datasetInfo.dataset.getValue(fieldName, i);
-          if (value === type) {
-            count++;
-          }
-        }
-        counts[type] = count;
-        console.log(`Count for "${type}": ${count}`);
-      });
-    } else {
-      // Fallback to array-based counting
-      console.log('Using array-based counting');
-      
-      // First, let's see what unique values actually exist in the data
-      const uniqueValues = new Set();
-      datasetInfo.data.forEach(row => {
-        const value = row[datasetInfo.fieldIndex];
-        if (value !== null && value !== undefined && value !== '') {
-          uniqueValues.add(value);
-        }
-      });
-      
-      console.log('Unique values found in data:', Array.from(uniqueValues));
-      console.log('Crime types we are looking for:', crimeTypes);
-
-      // Count each crime type
-      crimeTypes.forEach(type => {
-        const count = datasetInfo.data.filter(row => {
-          const value = row[datasetInfo.fieldIndex];
-          return value === type;
-        }).length;
-        counts[type] = count;
-        console.log(`Count for "${type}": ${count}`);
-      });
-    }
-
-    console.log('Final crime type counts:', counts);
+      counts[type] = count;
+    });
     return counts;
   }, [datasetInfo, crimeTypes]);
 
-  const handleTypeSelect = (type) => {
-    setSelectedType(type);
-    setIsOpen(false);
+  // Clear all filters
+  const clearAllFilters = useCallback(() => {
+    const currentFilters = reduxFilters || [];
+    console.log(`Clearing ${currentFilters.length} filters`);
+    
+    for (let i = currentFilters.length - 1; i >= 0; i--) {
+      dispatch(removeFilter(i, 'map'));
+    }
+  }, [reduxFilters, dispatch]);
 
-    if (!datasetInfo || !originalData) {
-      console.warn('No dataset info or original data available for filtering');
+  // Create filter using the original Kepler.gl actions but with proper field reference
+  const createFilterFixed = useCallback((filterValue) => {
+    if (!datasetInfo || !datasetInfo.field) {
+      console.log('Cannot create filter: no dataset info or field');
       return;
     }
 
-    console.log(`Applying filter for: ${type}`);
+    console.log(`Creating filter for "${filterValue}"`);
+    console.log('Dataset ID:', datasetInfo.datasetId);
+    console.log('Field object:', datasetInfo.field);
+    
+    // Clear existing filters first
+    clearAllFilters();
+    
+    setTimeout(() => {
+      console.log('Adding filter...');
+      dispatch(addFilter(datasetInfo.datasetId, 'map'));
+      
+      setTimeout(() => {
+        console.log('Setting filter name using field object...');
+        // Try using the complete field object instead of just the name
+        dispatch(setFilter(0, 'name', [datasetInfo.field], 'map'));
+        
+        setTimeout(() => {
+          console.log('Setting filter type...');
+          dispatch(setFilter(0, 'type', 'multiSelect', 'map'));
+          
+          setTimeout(() => {
+            console.log('Setting filter value...');
+            dispatch(setFilter(0, 'value', [filterValue], 'map'));
+            
+            setTimeout(() => {
+              console.log('Enabling filter...');
+              dispatch(setFilter(0, 'enabled', true, 'map'));
+              
+              console.log(`Filter configuration complete for "${filterValue}"`);
+              
+              // Verification
+              setTimeout(() => {
+                console.log('=== VERIFICATION ===');
+                const currentFilters = reduxFilters || [];
+                console.log('Filter count:', currentFilters.length);
+                if (currentFilters.length > 0) {
+                  const filter = currentFilters[0];
+                  console.log('Filter details:', {
+                    name: filter.name,
+                    type: filter.type,
+                    value: filter.value,
+                    enabled: filter.enabled,
+                    dataId: filter.dataId,
+                    fieldIdx: filter.fieldIdx
+                  });
+                  
+                  // Check if filter is properly configured
+                  if (Array.isArray(filter.name) && filter.name.length > 0 && 
+                      filter.type === 'multiSelect' &&
+                      Array.isArray(filter.value) && filter.value.includes(filterValue) &&
+                      filter.enabled === true) {
+                    console.log('✅ Filter appears to be properly configured');
+                  } else {
+                    console.log('❌ Filter configuration has issues');
+                  }
+                }
+              }, 1000);
+              
+            }, 200);
+          }, 200);
+        }, 200);
+      }, 500);
+    }, 300);
+  }, [datasetInfo, dispatch, clearAllFilters, reduxFilters]);
 
-    if (type === 'All Types') {
-      // Restore original data
-      console.log('Restoring original data with', originalData.rows.length, 'rows');
-      
-      // Use the correct payload structure for updateVisData
-      dispatch(updateVisData({
-        datasets: [{
-          info: {
-            id: datasetInfo.datasetId,
-            label: 'Crime Data'
-          },
-          data: {
-            fields: originalData.fields,
-            rows: originalData.rows
-          }
-        }],
-        options: {
-          centerMap: false,
-          keepExistingConfig: true
-        }
-      }, 'map'));
-    } else {
-      const filteredRows = originalData.rows.filter(row => 
-        row[datasetInfo.fieldIndex] === type
-      );
-      
-      console.log(`Filtered ${filteredRows.length} rows for type: ${type}`);
-      
-      if (filteredRows.length === 0) {
-        console.warn('No data found for selected crime type');
-        return;
-      }
-      
-      dispatch(updateVisData({
-        datasets: [{
-          info: {
-            id: datasetInfo.datasetId,
-            label: `Crime Data - ${type}`
-          },
-          data: {
-            fields: originalData.fields,
-            rows: filteredRows
-          }
-        }],
-        options: {
-          centerMap: false,
-          keepExistingConfig: true
-        }
-      }, 'map'));
+  // Alternative approach: Try setting the name as the field name string (not array)
+  const createFilterAlternative = useCallback((filterValue) => {
+    if (!datasetInfo || !datasetInfo.field) {
+      console.log('Cannot create filter: no dataset info or field');
+      return;
     }
-  };
 
+    console.log(`Creating filter alternative approach for "${filterValue}"`);
+    
+    clearAllFilters();
+    
+    setTimeout(() => {
+      dispatch(addFilter(datasetInfo.datasetId, 'map'));
+      
+      setTimeout(() => {
+        // Try setting name as just the field name string
+        console.log('Setting filter name as string:', FILTER_FIELD_NAME);
+        dispatch(setFilter(0, 'name', FILTER_FIELD_NAME, 'map'));
+        
+        setTimeout(() => {
+          dispatch(setFilter(0, 'type', 'multiSelect', 'map'));
+          
+          setTimeout(() => {
+            dispatch(setFilter(0, 'value', [filterValue], 'map'));
+            
+            setTimeout(() => {
+              dispatch(setFilter(0, 'enabled', true, 'map'));
+              
+              console.log(`Alternative filter approach complete for "${filterValue}"`);
+              
+            }, 100);
+          }, 100);
+        }, 100);
+      }, 300);
+    }, 200);
+  }, [datasetInfo, dispatch, clearAllFilters]);
+
+  // Try creating filter with dataId array and field index
+  const createFilterWithFieldIndex = useCallback((filterValue) => {
+    if (!datasetInfo || !datasetInfo.field) {
+      console.log('Cannot create filter: no dataset info or field');
+      return;
+    }
+
+    console.log(`Creating filter with field index for "${filterValue}"`);
+    console.log('Field index:', datasetInfo.fieldIndex);
+    
+    clearAllFilters();
+    
+    setTimeout(() => {
+      dispatch(addFilter(datasetInfo.datasetId, 'map'));
+      
+      setTimeout(() => {
+        // Try setting fieldIdx directly
+        dispatch(setFilter(0, 'fieldIdx', [datasetInfo.fieldIndex], 'map'));
+        
+        setTimeout(() => {
+          dispatch(setFilter(0, 'name', [FILTER_FIELD_NAME], 'map'));
+          
+          setTimeout(() => {
+            dispatch(setFilter(0, 'type', 'multiSelect', 'map'));
+            
+            setTimeout(() => {
+              dispatch(setFilter(0, 'value', [filterValue], 'map'));
+              
+              setTimeout(() => {
+                dispatch(setFilter(0, 'enabled', true, 'map'));
+                
+                console.log(`Field index filter approach complete for "${filterValue}"`);
+                
+              }, 100);
+            }, 100);
+          }, 100);
+        }, 100);
+      }, 300);
+    }, 200);
+  }, [datasetInfo, dispatch, clearAllFilters]);
+
+  // Handle type selection
+  const handleTypeSelect = useCallback((type) => {
+    console.log(`handleTypeSelect: User selected type "${type}"`);
+    setSelectedType(type);
+    setIsOpen(false);
+    
+    if (type === 'All Types') {
+      clearAllFilters();
+    } else {
+      // Try the field index approach first
+      createFilterWithFieldIndex(type);
+    }
+  }, [clearAllFilters, createFilterWithFieldIndex]);
+
+  // Debug logging
+  useEffect(() => {
+    if (reduxFilters && reduxFilters.length > 0) {
+      console.log(`Active filters count: ${reduxFilters.length}`);
+      reduxFilters.forEach((filter, index) => {
+        console.log(`Filter ${index}:`, {
+          name: filter.name,
+          nameType: typeof filter.name,
+          nameIsArray: Array.isArray(filter.name),
+          type: filter.type,
+          value: filter.value,
+          enabled: filter.enabled,
+          dataId: filter.dataId,
+          fieldIdx: filter.fieldIdx
+        });
+      });
+    } else {
+      console.log('No filters currently active');
+    }
+  }, [reduxFilters]);
+
+  // Debug dataset info
+  useEffect(() => {
+    if (datasetInfo) {
+      console.log('Dataset ready:', {
+        datasetId: datasetInfo.datasetId,
+        fieldExists: !!datasetInfo.field,
+        totalCount: datasetInfo.totalCount,
+        fieldIndex: datasetInfo.fieldIndex,
+        fieldName: FILTER_FIELD_NAME
+      });
+    }
+  }, [datasetInfo]);
+
+  // Styles
   const dropdownStyle = {
     position: 'absolute',
     top: '175px',
@@ -290,29 +308,11 @@ const FilterDropdown = () => {
     transition: 'background-color 0.15s ease'
   };
 
-  // Don't render if no datasets are available yet
-  if (!datasets || Object.keys(datasets).length === 0) {
-    console.log('FilterDropdown: Waiting for datasets to load');
-    return null; // Hide completely while loading
-  }
-
-  // Don't render if we can't find the crime type field
-  if (!datasetInfo || datasetInfo.fieldIndex === -1) {
-    console.log('FilterDropdown: Crime type field not found, hiding component');
-    return null;
-  }
-
-  // Don't render if no data is available
-  if (!datasetInfo.data || datasetInfo.data.length === 0) {
-    console.log('FilterDropdown: No data available in dataset');
+  if (!datasetInfo) {
     return (
       <div style={dropdownStyle}>
-        <div style={{
-          ...buttonStyle,
-          cursor: 'not-allowed',
-          opacity: 0.6
-        }}>
-          Loading data...
+        <div style={{ ...buttonStyle, cursor: 'not-allowed', opacity: 0.6 }}>
+          Initializing...
         </div>
       </div>
     );
@@ -327,16 +327,6 @@ const FilterDropdown = () => {
             ...buttonStyle,
             backgroundColor: isOpen ? 'rgba(30, 187, 214, 0.95)' : 'rgba(255, 255, 255, 0.95)',
             color: isOpen ? 'white' : 'black'
-          }}
-          onMouseOver={(e) => {
-            if (!isOpen) {
-              e.target.style.backgroundColor = 'rgba(240, 240, 240, 0.95)';
-            }
-          }}
-          onMouseOut={(e) => {
-            if (!isOpen) {
-              e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
-            }
           }}
         >
           <span style={{ 
@@ -363,22 +353,11 @@ const FilterDropdown = () => {
                 backgroundColor: selectedType === 'All Types' ? '#f8f9fa' : 'transparent'
               }}
               onClick={() => handleTypeSelect('All Types')}
-              onMouseOver={(e) => {
-                if (selectedType !== 'All Types') {
-                  e.target.style.backgroundColor = '#f8f9fa';
-                }
-              }}
-              onMouseOut={(e) => {
-                if (selectedType !== 'All Types') {
-                  e.target.style.backgroundColor = 'transparent';
-                }
-              }}
             >
               All Types ({datasetInfo.totalCount})
             </div>
             {crimeTypes.map((type, index) => {
               const count = typeCounts[type] || 0;
-
               return (
                 <div
                   key={type}
@@ -389,16 +368,6 @@ const FilterDropdown = () => {
                     backgroundColor: selectedType === type ? '#e3f2fd' : 'transparent'
                   }}
                   onClick={() => handleTypeSelect(type)}
-                  onMouseOver={(e) => {
-                    if (selectedType !== type) {
-                      e.target.style.backgroundColor = '#f8f9fa';
-                    }
-                  }}
-                  onMouseOut={(e) => {
-                    if (selectedType !== type) {
-                      e.target.style.backgroundColor = 'transparent';
-                    }
-                  }}
                 >
                   {type} ({count})
                 </div>
