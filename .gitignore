@@ -11,12 +11,13 @@ node_modules
 dist
 dist-ssr
 *.local
-osm.mbtiles
+
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
+.mbtiles
 .DS_Store
 *.suo
 *.ntvs*
