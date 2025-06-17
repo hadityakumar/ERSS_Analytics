@@ -1,0 +1,29 @@
+{
+  "options": {
+    "paths": {
+      "root": "C:\\Users\\KING\\AppData\\Roaming\\npm\\node_modules\\tileserver-gl\\node_modules\\tileserver-gl-styles",
+      "fonts": "fonts",
+      "styles": "styles",
+      "mbtiles": "D:\\BFBF\\Webd\\gis\\backend",
+      "pmtiles": "D:\\BFBF\\Webd\\gis\\backend"
+    }
+  },
+  "styles": {
+    "basic-preview": {
+      "style": "basic-preview/style.json",
+      "tilejson": {
+        "bounds": [
+          67.67457,
+          5.896067,
+          97.49344,
+          35.773
+        ]
+      }
+    }
+  },
+  "data": {
+    "v3": {
+      "mbtiles": "osm.mbtiles"
+    }
+  }
+}
