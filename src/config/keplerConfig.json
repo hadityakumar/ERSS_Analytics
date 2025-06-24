@@ -1,0 +1,242 @@
+{
+  "version": "v1",
+  "config": {
+    "visState": {
+      "filters": [
+        {
+          "dataId": [
+            "csv-data-1750660804357"
+          ],
+          "id": "26wvg3paa",
+          "name": [
+            "signal_lan"
+          ],
+          "type": "timeRange",
+          "value": [
+            1704068077000,
+            1735689002000
+          ],
+          "plotType": {
+            "interval": "2-day",
+            "defaultTimeFormat": "L",
+            "type": "histogram",
+            "aggregation": "sum"
+          },
+          "animationWindow": "free",
+          "yAxis": null,
+          "view": "minified",
+          "speed": 1,
+          "enabled": true
+        }
+      ],
+      "layers": [
+        {
+          "id": "points-layer-1750660804357",
+          "type": "point",
+          "config": {
+            "dataId": "csv-data-1750660804357",
+            "columnMode": "points",
+            "label": "Crime Points",
+            "color": [
+              255,
+              50,
+              0
+            ],
+            "highlightColor": [
+              252,
+              242,
+              26,
+              255
+            ],
+            "columns": {
+              "lat": "latitude",
+              "lng": "longitude"
+            },
+            "isVisible": true,
+            "visConfig": {
+              "radius": 3,
+              "fixedRadius": false,
+              "opacity": 0.3,
+              "outline": false,
+              "thickness": 2,
+              "strokeColor": null,
+              "colorRange": {
+                "name": "Global Warming",
+                "type": "sequential",
+                "category": "Uber",
+                "colors": [
+                  "#4C0035",
+                  "#880030",
+                  "#B72F15",
+                  "#D6610A",
+                  "#EF9100",
+                  "#FFC300"
+                ]
+              },
+              "strokeColorRange": {
+                "name": "Global Warming",
+                "type": "sequential",
+                "category": "Uber",
+                "colors": [
+                  "#4C0035",
+                  "#880030",
+                  "#B72F15",
+                  "#D6610A",
+                  "#EF9100",
+                  "#FFC300"
+                ]
+              },
+              "radiusRange": [
+                1,
+                20
+              ],
+              "filled": true,
+              "billboard": false,
+              "allowHover": true,
+              "showNeighborOnHover": false,
+              "showHighlightColor": true
+            },
+            "hidden": false,
+            "textLabel": [
+              {
+                "field": null,
+                "color": [
+                  255,
+                  255,
+                  255
+                ],
+                "size": 18,
+                "offset": [
+                  0,
+                  0
+                ],
+                "anchor": "start",
+                "alignment": "center",
+                "outlineWidth": 0,
+                "outlineColor": [
+                  255,
+                  0,
+                  0,
+                  255
+                ],
+                "background": false,
+                "backgroundColor": [
+                  0,
+                  0,
+                  200,
+                  255
+                ]
+              }
+            ]
+          },
+          "visualChannels": {
+            "colorField": null,
+            "colorScale": "quantile",
+            "strokeColorField": null,
+            "strokeColorScale": "quantile",
+            "sizeField": null,
+            "sizeScale": "linear"
+          }
+        }
+      ],
+      "effects": [],
+      "interactionConfig": {
+        "tooltip": {
+          "fieldsToShow": {
+            "csv-data-1750660804357": [
+              {
+                "name": "event_id",
+                "format": null
+              },
+              {
+                "name": "signal_lan",
+                "format": null
+              },
+              {
+                "name": "ahp_weighted_event_types_main_type",
+                "format": null
+              },
+              {
+                "name": "ahp_weighted_event_types_sub_type",
+                "format": null
+              },
+              {
+                "name": "ahp_weighted_event_types_label",
+                "format": null
+              }
+            ]
+          },
+          "compareMode": false,
+          "compareType": "absolute",
+          "enabled": true
+        },
+        "brush": {
+          "size": 0.5,
+          "enabled": false
+        },
+        "geocoder": {
+          "enabled": false
+        },
+        "coordinate": {
+          "enabled": false
+        }
+      },
+      "layerBlending": "normal",
+      "overlayBlending": "normal",
+      "splitMaps": [],
+      "animationConfig": {
+        "currentTime": null,
+        "speed": 1
+      },
+      "editor": {
+        "features": [],
+        "visible": true
+      }
+    },
+    "mapState": {
+      "bearing": 0,
+      "dragRotate": false,
+      "latitude": 8.5782259865,
+      "longitude": 76.95390701,
+      "pitch": 0,
+      "zoom": 9,
+      "isSplit": false,
+      "isViewportSynced": true,
+      "isZoomLocked": false,
+      "splitMapViewports": []
+    },
+    "mapStyle": {
+      "styleType": "customTileserver",
+      "topLayerGroups": {
+        "label": true,
+        "road": true,
+        "border": true,
+        "building": true,
+        "water": true,
+        "land": true,
+        "3d building": false
+      },
+      "visibleLayerGroups": {},
+      "threeDBuildingColor": [
+        216.3582696717761,
+        213.14803722449514,
+        201.54181222278703
+      ],
+      "backgroundColor": [
+        0,
+        0,
+        0
+      ],
+      "mapStyles": {
+        "customTileserver": {
+          "id": "customTileserver",
+          "label": "Local Tileserver",
+          "url": "http://localhost:8080/styles/basic-preview/style.json",
+          "icon": "map",
+          "layerGroups": []
+        }
+      }
+    },
+    "uiState": {"currentModal": null}
+  }
+}

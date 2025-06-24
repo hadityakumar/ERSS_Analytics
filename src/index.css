@@ -1,68 +1,82 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+/* Import IBM Plex Sans font */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&display=swap');
 
-  color-scheme: light dark;
-  color: rgba(92, 8, 8, 0.87);
-  background-color: 'transparent';
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Set IBM Plex Sans as the default font for all elements */
+* {
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif !important;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+/* Ensure body and html also use the font */
+html, body {
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif !important;
 }
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+/* Apply to all common elements */
+h1, h2, h3, h4, h5, h6, p, div, span, button, input, textarea, select, label {
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif !important;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* Apply to Kepler.gl components specifically */
+.kepler-gl *,
+.kepler-gl__side-panel *,
+.kepler-gl__filter-panel *,
+.kepler-gl__map-container * {
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif !important;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+/* —— Kepler filter panel overrides —— */
+
+/* 1) Narrow the side‐panel & time‐filter panel */
+.kepler-gl__side-panel-inner,
+.kepler-gl__filter-panel {
+  width: 50px !important;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* 2) Shrink the time‐range histogram */
+.kepler-gl__filter-range-chart,
+.kepler-gl__filter-range-chart .rv-xy-plot,
+.kepler-gl__filter-range-chart .rv-xy-plot__inner {
+  height: 50px !important;
+  max-height: 50px !important;
+  overflow: hidden !important;
+}
+
+/* 3) Tighten up header & content padding */
+.kepler-gl__filter-panel .panel__header,
+.kepler-gl__filter-panel .panel__content {
+  padding: 4px 8px !important;
+}
+
+/* 4) Smaller date‐label text under the slider */
+.kepler-gl__filter-range-selector__boundary {
+  font-size: 10px !important;
+  line-height: 1 !important;
+}
+
+/* 5) Shrink the animation‐time thumb at bottom */
+.kepler-gl__time-thumb {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+/* 6) Force histogram SVG height override */
+.kepler-gl__filter-range-chart svg,
+.kepler-gl__filter-range-chart .rv-xy-plot__inner svg {
+  height: 50px !important;
+  max-height: 50px !important;
+}
+
+/* 7) Shrink the slider rail and overall selector height */
+.kepler-gl__filter-range-selector {
+  height: 30px !important;
+}
+.kepler-gl__filter-range-selector__rail {
+  height: 4px !important;
+  margin-top: 4px !important;
+}
+
+/* sometimes React-Vis draws its own internal axis/padding */
+.kepler-gl__filter-range-selector .rv-xy-plot__axis,
+.kepler-gl__filter-range-selector .rv-xy-plot__axis__ticks {
+  display: none !important;
 }

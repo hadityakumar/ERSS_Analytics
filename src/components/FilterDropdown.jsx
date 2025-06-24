@@ -261,10 +261,7 @@ const FilterDropdown = () => {
 
   // Styles
   const dropdownStyle = {
-    position: 'absolute',
-    top: '175px',
-    right: '100px',
-    zIndex: 1000,
+    position: 'static',
     minWidth: '220px'
   };
 

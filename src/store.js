@@ -42,7 +42,7 @@ export const {
   setDateFilter 
 } = csvProcessingSlice.actions;
 
-// Custom Kepler.gl reducer to handle modal issues
+// Custom Kepler.gl reducer to handle modal issues and custom filter actions
 const customKeplerGlReducer = (state, action) => {
   // Handle modal cleanup on data fetch start
   if (action.type === 'FETCH_CSV_DATA') {
@@ -74,6 +74,56 @@ const customKeplerGlReducer = (state, action) => {
     };
   }
   
+  // Handle custom filter actions
+  if (action.type === '@@kepler.gl/ADD_FILTER_DIRECT' && action.target === 'map') {
+    console.log('Custom ADD_FILTER_DIRECT action received:', action.payload);
+    
+    if (state && state.map && state.map.visState) {
+      const currentFilters = state.map.visState.filters || [];
+      const newFilters = [...currentFilters, action.payload.filter];
+      
+      console.log('Adding filter directly to state:', {
+        currentCount: currentFilters.length,
+        newCount: newFilters.length,
+        newFilter: action.payload.filter
+      });
+      
+      return {
+        ...state,
+        map: {
+          ...state.map,
+          visState: {
+            ...state.map.visState,
+            filters: newFilters
+          }
+        }
+      };
+    }
+  }
+  
+  if (action.type === '@@kepler.gl/UPDATE_FILTER_COMPLETE' && action.target === 'map') {
+    console.log('Custom UPDATE_FILTER_COMPLETE action received:', action.payload);
+    
+    if (state && state.map && state.map.visState) {
+      console.log('Updating filters array completely:', {
+        oldCount: (state.map.visState.filters || []).length,
+        newCount: action.payload.filters.length,
+        newFilters: action.payload.filters
+      });
+      
+      return {
+        ...state,
+        map: {
+          ...state.map,
+          visState: {
+            ...state.map.visState,
+            filters: action.payload.filters
+          }
+        }
+      };
+    }
+  }
+  
   // Use the standard reducer for all other actions
   return keplerGlReducer(state, action);
 };
@@ -99,7 +149,12 @@ const store = configureStore({
           '@@kepler.gl/MOUSE_MOVE',
           '@@kepler.gl/UPDATE_MAP',
           '@@kepler.gl/ADD_DATA_TO_MAP',
-          'KEPLERGL_FORCE_UPDATE'
+          '@@kepler.gl/ADD_FILTER',
+          '@@kepler.gl/UPDATE_FILTER',
+          '@@kepler.gl/REMOVE_FILTER',
+          'KEPLERGL_FORCE_UPDATE',
+          '@@kepler.gl/ADD_FILTER_DIRECT',
+          '@@kepler.gl/UPDATE_FILTER_COMPLETE'
         ],
         ignoredActionPaths: [
           'payload',

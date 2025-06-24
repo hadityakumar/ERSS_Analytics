@@ -1,167 +1,117 @@
 import React, { useState, useCallback } from 'react';
-import { useDispatch } from 'react-redux';
-import { setDateFilter } from '../store';
+import { useDispatch, useSelector }   from 'react-redux';
+import { setDateFilter }              from '../store';
 
-const DateRangeSelector = () => {
+export const DATE_FIELD_NAME = 'signal_lan';
+
+export default function DateRangeSelector() {
   const dispatch = useDispatch();
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [datePickerVisible, setDatePickerVisible] = useState(true);
+  const { startDate, endDate } = useSelector(s => s.csvProcessing);
 
-  const handleProcessWithDateRange = useCallback((e) => {
+  const [from, setFrom] = useState(startDate||'');
+  const [to,   setTo]   = useState(endDate  ||'');
+
+  const apply = useCallback(e=>{
     e.preventDefault();
+    if (!from||!to||new Date(from)>new Date(to)) return alert('Invalid range');
     
-    if (!startDate || !endDate) {
-      alert('Please select both start and end dates');
-      return;
-    }
+    // Update the date filter in store
+    dispatch(setDateFilter({ startDate:from, endDate:to }));
     
-    console.log(`Processing with date range: ${startDate} to ${endDate}`);
+    // Trigger filtered CSV processing
+    dispatch({type:'FETCH_CSV_DATA_FILTERED', payload: { startDate: from, endDate: to }});
+  },[from,to,dispatch]);
+
+  const clear = useCallback(()=>{
+    // Clear the date filter
+    dispatch(setDateFilter({ startDate:null, endDate:null }));
     
-    dispatch(setDateFilter(startDate, endDate));
-    dispatch({ 
-      type: 'FETCH_CSV_DATA', 
-      payload: { startDate, endDate } 
-    });
+    // Clear form inputs
+    setFrom('');
+    setTo('');
     
-    setDatePickerVisible(false);
-  }, [dispatch, startDate, endDate]);
+    // Load full dataset
+    dispatch({type:'FETCH_CSV_DATA_INITIAL'});
+  },[dispatch]);
 
   return (
-    <div style={{
-      position: 'absolute',
-      bottom: '20px',
-      right: '20px',
-      zIndex: 1000,
-      backgroundColor: datePickerVisible ? 'rgba(255, 255, 255, 0.9)' : 'transparent',
-      borderRadius: datePickerVisible ? '8px' : '20px',
-      boxShadow: datePickerVisible ? '0 4px 12px rgba(0,0,0,0.15)' : 'none',
-      padding: datePickerVisible ? '20px' : '0px',
-      transition: 'all 0.3s ease',
-      width: datePickerVisible ? '300px' : '35px',
-      height: datePickerVisible ? 'auto' : '35px',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden'
-    }}>
-      {datePickerVisible ? (
-        <form onSubmit={handleProcessWithDateRange}>
-          <h3 style={{ margin: '0 0 15px 0', color: '#1EBBD6', fontSize: '16px' }}>
-            Filter by Date Range
-          </h3>
-          
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#555' }}>
-              Start Date:
-            </label>
-            <input 
-              type="date" 
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px',
-                borderRadius: '4px',
-                border: '1px solid #ddd'
-              }}
-            />
-          </div>
-          
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#555' }}>
-              End Date:
-            </label>
-            <input 
-              type="date" 
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px',
-                borderRadius: '4px',
-                border: '1px solid #ddd'
-              }}
-            />
-          </div>
-          
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <button 
-              type="submit"
-              style={{
-                padding: '8px 15px',
-                background: '#1EBBD6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                flex: '1 0 auto',
-                marginRight: '8px'
-              }}
-            >
-              Process
-            </button>
-            
-            <button 
-              type="button"
-              onClick={() => setDatePickerVisible(false)}
-              style={{
-                padding: '8px 15px',
-                background: '#f5f5f5',
-                color: '#666',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                flex: '0 0 auto'
-              }}
-            >
-              X
-            </button>
-          </div>
-        </form>
-      ) : (
-        <button
-          onClick={() => setDatePickerVisible(true)}
-          style={{
-            width: '40px',
-            height: '40px',
-            background: 'rgba(255, 255, 255, 0.9)',
-            border: 'none',
-            borderRadius: '17.5px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-            transition: 'all 0.2s ease',
-            backdropFilter: 'blur(4px)',
-            padding: '0'
-          }}
-          onMouseOver={(e) => {
-            e.target.style.backgroundColor = 'rgba(30, 187, 214, 0.9)';
-            e.target.style.transform = 'scale(1.05)';
-          }}
-          onMouseOut={(e) => {
-            e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
-            e.target.style.transform = 'scale(1)';
-          }}
-          title="Open date filter"
-        >
-          <img 
-            src="/calender-svgrepo-com.svg" 
-            alt="Calendar" 
-            style={{
-              width: '22px',
-              height: '22px',
-              filter: 'invert(0.2)',
-              pointerEvents: 'none',
-              marginLeft: '-5px',
-              display: 'block'
-            }}
-          />
-        </button>
-      )}
-    </div>
+    <form
+      onSubmit={apply}
+      style={{
+        position: 'static',
+        background: 'rgba(255,255,255,0.95)',
+        padding: '12px',
+        borderRadius: '8px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        width: '220px'
+      }}
+    >
+     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+       <label style={{ fontSize: '12px', color: '#666', minWidth: '40px' }}>From:</label>
+       <input 
+         type="date" 
+         value={from} 
+         onChange={e=>setFrom(e.target.value)}
+         style={{
+           flex: 1,
+           padding: '6px',
+           border: '1px solid #ddd',
+           borderRadius: '4px',
+           fontSize: '12px'
+         }}
+       />
+     </div>
+     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+       <label style={{ fontSize: '12px', color: '#666', minWidth: '40px' }}>To:</label>
+       <input 
+         type="date" 
+         value={to} 
+         onChange={e=>setTo(e.target.value)}
+         style={{
+           flex: 1,
+           padding: '6px',
+           border: '1px solid #ddd',
+           borderRadius: '4px',
+           fontSize: '12px'
+         }}
+       />
+     </div>
+     <div style={{ display: 'flex', gap: '8px' }}>
+       <button 
+         type="submit"
+         style={{
+           flex: 1,
+           padding: '8px',
+           backgroundColor: '#1EBBD6',
+           color: 'white',
+           border: 'none',
+           borderRadius: '4px',
+           fontSize: '12px',
+           cursor: 'pointer'
+         }}
+       >
+         Apply
+       </button>
+       <button 
+         type="button" 
+         onClick={clear}
+         style={{
+           flex: 1,
+           padding: '8px',
+           backgroundColor: '#666',
+           color: 'white',
+           border: 'none',
+           borderRadius: '4px',
+           fontSize: '12px',
+           cursor: 'pointer'
+         }}
+       >
+         Show All
+       </button>
+     </div>
+    </form>
   );
-};
-
-export default DateRangeSelector;
+}

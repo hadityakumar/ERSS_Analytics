@@ -65,10 +65,7 @@ const KDEButton = () => {
         onClick={handleKDEAnalysis}
         disabled={isAnalyzing}
         style={{
-          position: 'absolute',
-          top: '125px', // Below the hotspot button
-          right: '100px',
-          zIndex: 1000,
+          position: 'static',
           padding: '12px 20px',
           backgroundColor: isAnalyzing ? '#cccccc' : '#2E86AB',
           color: 'white',
@@ -81,7 +78,8 @@ const KDEButton = () => {
           transition: 'all 0.3s ease',
           display: 'flex',
           alignItems: 'center',
-          gap: '8px'
+          gap: '8px',
+          width: '200px'
         }}
         onMouseOver={(e) => {
           if (!isAnalyzing) {

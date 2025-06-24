@@ -6,7 +6,7 @@ const HotspotButton = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   
   const csvProcessing = useSelector(state => state.csvProcessing || {});
-  
+
   const handleHotspotAnalysis = async () => {
     setIsAnalyzing(true);
     
@@ -65,12 +65,9 @@ const HotspotButton = () => {
         onClick={handleHotspotAnalysis}
         disabled={isAnalyzing}
         style={{
-          position: 'absolute',
-          top: '75px',
-          right: '100px',
-          zIndex: 1000,
+          position: 'static',
           padding: '12px 20px',
-          backgroundColor: isAnalyzing ? '#cccccc' : '#FF6B35',
+          backgroundColor: isAnalyzing ? '#cccccc' : '#E3611C',
           color: 'white',
           border: 'none',
           borderRadius: '8px',
@@ -81,17 +78,18 @@ const HotspotButton = () => {
           transition: 'all 0.3s ease',
           display: 'flex',
           alignItems: 'center',
-          gap: '8px'
+          gap: '8px',
+          width: '200px'
         }}
         onMouseOver={(e) => {
           if (!isAnalyzing) {
-            e.target.style.backgroundColor = '#E55A2B';
+            e.target.style.backgroundColor = '#C44E14';
             e.target.style.transform = 'translateY(-2px)';
           }
         }}
         onMouseOut={(e) => {
           if (!isAnalyzing) {
-            e.target.style.backgroundColor = '#FF6B35';
+            e.target.style.backgroundColor = '#E3611C';
             e.target.style.transform = 'translateY(0)';
           }
         }}
