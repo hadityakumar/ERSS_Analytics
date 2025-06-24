@@ -23,7 +23,9 @@
   },
   "data": {
     "v3": {
-      "mbtiles": "osm.mbtiles"
+      "mbtiles": "osm.mbtiles",
+      "tilesize": 512,
+      "sparse": true
     }
   }
 }
