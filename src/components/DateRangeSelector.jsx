@@ -15,22 +15,14 @@ export default function DateRangeSelector() {
     e.preventDefault();
     if (!from||!to||new Date(from)>new Date(to)) return alert('Invalid range');
     
-    // Update the date filter in store
     dispatch(setDateFilter({ startDate:from, endDate:to }));
-    
-    // Trigger filtered CSV processing
     dispatch({type:'FETCH_CSV_DATA_FILTERED', payload: { startDate: from, endDate: to }});
   },[from,to,dispatch]);
 
   const clear = useCallback(()=>{
-    // Clear the date filter
     dispatch(setDateFilter({ startDate:null, endDate:null }));
-    
-    // Clear form inputs
     setFrom('');
     setTo('');
-    
-    // Load full dataset
     dispatch({type:'FETCH_CSV_DATA_INITIAL'});
   },[dispatch]);
 
@@ -39,10 +31,11 @@ export default function DateRangeSelector() {
       onSubmit={apply}
       style={{
         position: 'static',
-        background: 'rgba(255,255,255,0.95)',
+        background: '#000000',
         padding: '12px',
         borderRadius: '8px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        border: '1px solid #333333',
+        boxShadow: '0 2px 8px rgba(255,255,255,0.1)',
         display: 'flex',
         flexDirection: 'column',
         gap: '10px',
@@ -50,7 +43,7 @@ export default function DateRangeSelector() {
       }}
     >
      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-       <label style={{ fontSize: '12px', color: '#666', minWidth: '40px' }}>From:</label>
+       <label style={{ fontSize: '12px', color: '#ffffff', minWidth: '40px', fontWeight: '500' }}>From:</label>
        <input 
          type="date" 
          value={from} 
@@ -58,14 +51,16 @@ export default function DateRangeSelector() {
          style={{
            flex: 1,
            padding: '6px',
-           border: '1px solid #ddd',
+           border: '1px solid #555555',
            borderRadius: '4px',
-           fontSize: '12px'
+           fontSize: '12px',
+           backgroundColor: '#222222',
+           color: '#ffffff'
          }}
        />
      </div>
      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-       <label style={{ fontSize: '12px', color: '#666', minWidth: '40px' }}>To:</label>
+       <label style={{ fontSize: '12px', color: '#ffffff', minWidth: '40px', fontWeight: '500' }}>To:</label>
        <input 
          type="date" 
          value={to} 
@@ -73,9 +68,11 @@ export default function DateRangeSelector() {
          style={{
            flex: 1,
            padding: '6px',
-           border: '1px solid #ddd',
+           border: '1px solid #555555',
            borderRadius: '4px',
-           fontSize: '12px'
+           fontSize: '12px',
+           backgroundColor: '#222222',
+           color: '#ffffff'
          }}
        />
      </div>
@@ -85,12 +82,20 @@ export default function DateRangeSelector() {
          style={{
            flex: 1,
            padding: '8px',
-           backgroundColor: '#1EBBD6',
-           color: 'white',
-           border: 'none',
+           backgroundColor: '#ffffff',
+           color: '#000000',
+           border: '1px solid #ffffff',
            borderRadius: '4px',
            fontSize: '12px',
-           cursor: 'pointer'
+           fontWeight: 'bold',
+           cursor: 'pointer',
+           transition: 'all 0.2s ease'
+         }}
+         onMouseOver={(e) => {
+           e.target.style.backgroundColor = '#cccccc';
+         }}
+         onMouseOut={(e) => {
+           e.target.style.backgroundColor = '#ffffff';
          }}
        >
          Apply
@@ -101,12 +106,20 @@ export default function DateRangeSelector() {
          style={{
            flex: 1,
            padding: '8px',
-           backgroundColor: '#666',
-           color: 'white',
-           border: 'none',
+           backgroundColor: '#333333',
+           color: '#ffffff',
+           border: '1px solid #555555',
            borderRadius: '4px',
            fontSize: '12px',
-           cursor: 'pointer'
+           fontWeight: 'bold',
+           cursor: 'pointer',
+           transition: 'all 0.2s ease'
+         }}
+         onMouseOver={(e) => {
+           e.target.style.backgroundColor = '#555555';
+         }}
+         onMouseOut={(e) => {
+           e.target.style.backgroundColor = '#333333';
          }}
        >
          Show All

@@ -26,9 +26,7 @@ const KDEButton = () => {
       
       if (result.success) {
         console.log('KDE analysis completed:', result.details);
-        
         dispatch({ type: 'LOAD_KDE_DATA' });
-        
         alert('KDE analysis completed successfully! The density layer has been added to the map.');
       } else {
         console.error('KDE analysis failed:', result.error);
@@ -45,7 +43,7 @@ const KDEButton = () => {
   const spinnerStyle = {
     width: '16px',
     height: '16px',
-    border: '2px solid #ffffff',
+    border: '2px solid #000000',
     borderTop: '2px solid transparent',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite'
@@ -67,14 +65,14 @@ const KDEButton = () => {
         style={{
           position: 'static',
           padding: '12px 20px',
-          backgroundColor: isAnalyzing ? '#cccccc' : '#2E86AB',
-          color: 'white',
-          border: 'none',
+          backgroundColor: isAnalyzing ? '#555555' : '#000000',
+          color: '#ffffff',
+          border: '1px solid #ffffff',
           borderRadius: '8px',
           cursor: isAnalyzing ? 'not-allowed' : 'pointer',
           fontSize: '14px',
           fontWeight: 'bold',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          boxShadow: '0 4px 12px rgba(255,255,255,0.15)',
           transition: 'all 0.3s ease',
           display: 'flex',
           alignItems: 'center',
@@ -83,13 +81,13 @@ const KDEButton = () => {
         }}
         onMouseOver={(e) => {
           if (!isAnalyzing) {
-            e.target.style.backgroundColor = '#236B87';
+            e.target.style.backgroundColor = '#333333';
             e.target.style.transform = 'translateY(-2px)';
           }
         }}
         onMouseOut={(e) => {
           if (!isAnalyzing) {
-            e.target.style.backgroundColor = '#2E86AB';
+            e.target.style.backgroundColor = '#000000';
             e.target.style.transform = 'translateY(0)';
           }
         }}
