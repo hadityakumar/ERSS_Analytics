@@ -41,7 +41,7 @@ const Footer = () => {
       bottom: '0px',
       left: '0px',
       width: '100%', 
-      height: '40px',
+      height: '32px',
       backgroundColor: '#000000',
       color: 'white',
       display: 'flex',

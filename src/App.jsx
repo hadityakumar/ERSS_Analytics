@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import Header from './components/Header';
@@ -9,6 +9,8 @@ import DateRangeSelector from './components/DateRangeSelector';
 import HotspotButton from './components/HotspotButton';
 import KDEButton from './components/KDEButton';
 import FilterDropdown from './components/FilterDropdown';
+import SubtypeDropdown from './components/SubtypeDropdown';
+import SeverityDropdown from './components/SeverityDropdown';
 import LoadingState from './components/LoadingState';
 import ErrorState from './components/ErrorState';
 import MapContainer from './components/MapContainer';
@@ -17,6 +19,8 @@ import { useMapStyles } from './hooks/useMapStyles';
 
 const App = () => {
   const dispatch = useDispatch();
+  const [selectedMainTypes, setSelectedMainTypes] = useState(['All Types']);
+  const [selectedSubtypes, setSelectedSubtypes] = useState(['All Subtypes']);
   
   useMapStyles();
   
@@ -26,11 +30,24 @@ const App = () => {
   useEffect(() => {
     console.log('App mounted, loading initial data...');
     dispatch({ type: 'FETCH_CSV_DATA_INITIAL' });
-  }, [dispatch]); // Only run once when component mounts
+  }, [dispatch]);
+
+  const handleMainTypeSelectionChange = (selectedTypes) => {
+    setSelectedMainTypes(selectedTypes);
+  };
+
+  const handleSubtypeSelectionChange = (selectedSubs) => {
+    setSelectedSubtypes(selectedSubs);
+  };
 
   if (error) {
     console.log("Rendering error state:", error);
     return <ErrorState error={error} />;
+  }
+
+  // Show full-screen loading for initial data processing
+  if (isProcessing) {
+    return <LoadingState mapOnly={false} />;
   }
 
   console.log("Rendering map view");
@@ -53,7 +70,7 @@ const App = () => {
         top:  '45px', 
         left: '10px',
         right: '10px',
-        bottom: '50px', // Above footer (40px + 10px margin)
+        bottom: '36px', 
         display: 'flex',
         flexDirection: 'row',
         gap: '10px'
@@ -110,10 +127,10 @@ const App = () => {
         }}>
           {/* Top right - Control buttons */}
           <div style={{
-            flex: '0.35', // Smaller than top left (0.44)
+            flex: '0.35',
             backgroundColor: 'rgba(255, 255, 255, 0.95)',
             borderRadius: '5px',
-            padding: '8px', // Reduced padding
+            padding: '8px',
             position: 'relative',
             boxShadow: '0 4px 20px black',
             border: '1px solid black',
@@ -122,14 +139,27 @@ const App = () => {
           }}>
             <div style={{
               display: 'flex',
-              flexDirection: 'column',
-              gap: '8px', // Smaller gap
+              flexDirection: 'row',
+              gap: '8px', 
               alignItems: 'flex-start',
               height: '100%'
             }}>
-              <HotspotButton />
-              <KDEButton />
-              <FilterDropdown />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <HotspotButton />
+                <KDEButton />
+                <SeverityDropdown 
+                  selectedMainTypes={selectedMainTypes} 
+                  selectedSubtypes={selectedSubtypes} 
+                />
+              </div>
+              <div>
+                <FilterDropdown onSelectionChange={handleMainTypeSelectionChange} />
+                <SubtypeDropdown 
+                  selectedMainTypes={selectedMainTypes} 
+                  onSelectionChange={handleSubtypeSelectionChange}
+                />
+              </div>
+              
               <DateRangeSelector />
             </div>
           </div>
@@ -145,8 +175,8 @@ const App = () => {
           }}>
             <MapContainer />
             <CenterButton />
-            {/* Show map-only loading overlay for both initial load and filtering */}
-            {(isProcessing || isFiltering) && <LoadingState mapOnly={true} />}
+            {/* Show map-only loading overlay for filtering only */}
+            {isFiltering && <LoadingState mapOnly={false} />}
           </div>
           
           {/* Bottom right panel */}

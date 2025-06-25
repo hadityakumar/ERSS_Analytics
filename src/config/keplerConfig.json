@@ -54,7 +54,7 @@
             },
             "isVisible": true,
             "visConfig": {
-              "radius": 3,
+              "radius": 5,
               "fixedRadius": false,
               "opacity": 0.3,
               "outline": false,

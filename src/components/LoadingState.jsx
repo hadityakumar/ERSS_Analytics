@@ -52,12 +52,12 @@ const LoadingState = ({ startDate, endDate, mapOnly = false }) => {
       </div>
     );
   }
-
-  // Full screen loading (for initial app load)
-  return (
+  else{
+    return (
     <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: '#000000' }}>
       <div style={{ 
         position: 'absolute', 
+        zIndex: 1000,
         top: '50%', 
         left: '50%', 
         transform: 'translate(-50%, -50%)', 
@@ -89,6 +89,7 @@ const LoadingState = ({ startDate, endDate, mapOnly = false }) => {
       </div>
     </div>
   );
+}
 };
 
 export default LoadingState;
