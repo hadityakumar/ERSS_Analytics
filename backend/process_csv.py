@@ -10,6 +10,20 @@ parser.add_argument('--start-date', type=str, help='Start date for filtering (YY
 parser.add_argument('--end-date', type=str, help='End date for filtering (YYYY-MM-DD)')
 args = parser.parse_args()
 
+def get_part_of_day(hour):
+    """
+    Categorize hour into part of day
+    MORNING: 6-12, AFTERNOON: 12-18, EVENING: 18-24, NIGHT: 0-6
+    """
+    if 6 <= hour < 12:
+        return 'MORNING'
+    elif 12 <= hour < 18:
+        return 'AFTERNOON'
+    elif 18 <= hour < 24:
+        return 'EVENING'
+    else:  # 0 <= hour < 6
+        return 'NIGHT'
+
 print("Starting CSV processing...")
 
 try:
@@ -19,6 +33,10 @@ try:
     
     if 'signal_lan' in csv1.columns:
         csv1['signal_lan'] = pd.to_datetime(csv1['signal_lan'], format='%Y/%m/%d %H:%M:%S.%f')
+        
+        # Create part of day column
+        csv1['part_of_day'] = csv1['signal_lan'].dt.hour.apply(get_part_of_day)
+        print(f"Added 'part_of_day' column with categories: {csv1['part_of_day'].value_counts().to_dict()}")
     
     if args.start_date and args.end_date:
         start_date = pd.to_datetime(args.start_date)
@@ -62,6 +80,11 @@ try:
     print(f"Original count: {len(csv1)}")
     print(f"Filtered count: {len(filtered_csv1)}")
     print(f"Removed {len(csv1) - len(filtered_csv1)} points that were within 250m of points in the second file")
+    
+    # Show part of day distribution in final filtered data
+    if 'part_of_day' in filtered_csv1.columns:
+        print(f"Part of day distribution in filtered data: {filtered_csv1['part_of_day'].value_counts().to_dict()}")
+    
     print("CSV processing completed successfully")
     
 except Exception as e:

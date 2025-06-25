@@ -2,15 +2,16 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addFilter, setFilter, removeFilter } from '@kepler.gl/actions';
 
-const SEVERITY_FIELD_NAME = 'ahp_weighted_event_types_label'; 
+const PART_OF_DAY_FIELD_NAME = 'part_of_day';
 const MAIN_TYPE_FIELD_NAME = 'ahp_weighted_event_types_main_type';
 const SUBTYPE_FIELD_NAME = 'ahp_weighted_event_types_sub_type';
-const SEVERITY_LEVELS = ['EMERGENCY', 'HIGH', 'MEDIUM', 'LOW'];
+const SEVERITY_FIELD_NAME = 'ahp_weighted_event_types_label';
+const PART_OF_DAY_CATEGORIES = ['MORNING', 'AFTERNOON', 'EVENING', 'NIGHT'];
 
-const SeverityDropdown = ({ selectedMainTypes, selectedSubtypes, onSelectionChange }) => {
+const PartOfDayDropdown = ({ selectedMainTypes, selectedSubtypes, selectedSeverities }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedSeverities, setSelectedSeverities] = useState(['All Levels']);
+  const [selectedPartOfDay, setSelectedPartOfDay] = useState(['All Times']);
 
   const datasets = useSelector(state => state.keplerGl?.map?.visState?.datasets);
   const reduxFilters = useSelector(state => state.keplerGl?.map?.visState?.filters);
@@ -23,33 +24,35 @@ const SeverityDropdown = ({ selectedMainTypes, selectedSubtypes, onSelectionChan
     
     return {
       datasetId,
-      fieldIndex: dataset.fields?.findIndex(f => f.name === SEVERITY_FIELD_NAME),
+      fieldIndex: dataset.fields?.findIndex(f => f.name === PART_OF_DAY_FIELD_NAME),
       mainTypeFieldIndex: dataset.fields?.findIndex(f => f.name === MAIN_TYPE_FIELD_NAME),
       subtypeFieldIndex: dataset.fields?.findIndex(f => f.name === SUBTYPE_FIELD_NAME),
+      severityFieldIndex: dataset.fields?.findIndex(f => f.name === SEVERITY_FIELD_NAME),
       totalCount: dataset.dataContainer?._rows?.length || 0,
       dataset
     };
   }, [datasets]);
 
-  // Reset selected severities when main types or subtypes change
+  // Reset selected part of day when any other filter changes
   useEffect(() => {
-    setSelectedSeverities(['All Levels']);
-  }, [selectedMainTypes, selectedSubtypes]);
+    setSelectedPartOfDay(['All Times']);
+  }, [selectedMainTypes, selectedSubtypes, selectedSeverities]);
 
-  // Calculate severity counts based on current main type and subtype selections
-  const severityCounts = useMemo(() => {
+  // Calculate part of day counts based on current filter selections
+  const partOfDayCounts = useMemo(() => {
     if (!datasetInfo || datasetInfo.fieldIndex === -1) return {};
     
     const counts = {};
-    SEVERITY_LEVELS.forEach(severity => {
-      counts[severity] = 0;
+    PART_OF_DAY_CATEGORIES.forEach(partOfDay => {
+      counts[partOfDay] = 0;
     });
 
     if (datasetInfo.dataset?.getValue) {
       for (let i = 0; i < datasetInfo.dataset.length; i++) {
-        const severityValue = datasetInfo.dataset.getValue(SEVERITY_FIELD_NAME, i);
+        const partOfDayValue = datasetInfo.dataset.getValue(PART_OF_DAY_FIELD_NAME, i);
         const mainTypeValue = datasetInfo.dataset.getValue(MAIN_TYPE_FIELD_NAME, i);
         const subtypeValue = datasetInfo.dataset.getValue(SUBTYPE_FIELD_NAME, i);
+        const severityValue = datasetInfo.dataset.getValue(SEVERITY_FIELD_NAME, i);
         
         // Check if this row matches the current main type filter
         let matchesMainType = true;
@@ -63,91 +66,100 @@ const SeverityDropdown = ({ selectedMainTypes, selectedSubtypes, onSelectionChan
           matchesSubtype = selectedSubtypes.includes(subtypeValue);
         }
         
-        // Only count if it matches both filters and is a valid severity level
-        if (matchesMainType && matchesSubtype && SEVERITY_LEVELS.includes(severityValue)) {
-          counts[severityValue]++;
+        // Check if this row matches the current severity filter
+        let matchesSeverity = true;
+        if (selectedSeverities && !selectedSeverities.includes('All Levels')) {
+          matchesSeverity = selectedSeverities.includes(severityValue);
+        }
+        
+        // Only count if it matches all filters and is a valid part of day category
+        if (matchesMainType && matchesSubtype && matchesSeverity && PART_OF_DAY_CATEGORIES.includes(partOfDayValue)) {
+          counts[partOfDayValue]++;
         }
       }
     }
     
     return counts;
-  }, [datasetInfo, selectedMainTypes, selectedSubtypes]);
+  }, [datasetInfo, selectedMainTypes, selectedSubtypes, selectedSeverities]);
 
-  const existingSeverityFilterIndex = useMemo(() => {
+  const clearPartOfDayFilters = useCallback(() => {
     const currentFilters = reduxFilters || [];
-    return currentFilters.findIndex(filter => filter?.name?.[0] === SEVERITY_FIELD_NAME);
-  }, [reduxFilters]);
-
-  const clearSeverityFilter = useCallback(() => {
-    if (existingSeverityFilterIndex !== -1) {
-      dispatch(removeFilter(existingSeverityFilterIndex, 'map'));
+    for (let i = currentFilters.length - 1; i >= 0; i--) {
+      const filter = currentFilters[i];
+      if (filter?.name?.[0] === PART_OF_DAY_FIELD_NAME) {
+        dispatch(removeFilter(i, 'map'));
+      }
     }
-  }, [existingSeverityFilterIndex, dispatch]);
+  }, [reduxFilters, dispatch]);
 
   const createFilter = useCallback((filterValues) => {
     if (!datasetInfo || datasetInfo.fieldIndex === -1 || !filterValues.length) return;
     
-    // Only clear the existing severity filter, not all filters
-    clearSeverityFilter();
+    // Clear existing part of day filters first
+    clearPartOfDayFilters();
     
+    // Wait for filters to be cleared, then add new filter
     setTimeout(() => {
       dispatch(addFilter(datasetInfo.datasetId, 'map'));
-      
-      setTimeout(() => {
-        // Find the newly added filter (it will be at the end)
-        const currentFilters = reduxFilters || [];
-        const newFilterIndex = currentFilters.length;
-        
-        dispatch(setFilter(newFilterIndex, 'fieldIdx', [datasetInfo.fieldIndex], 'map'));
-        dispatch(setFilter(newFilterIndex, 'name', [SEVERITY_FIELD_NAME], 'map'));
-        dispatch(setFilter(newFilterIndex, 'type', 'multiSelect', 'map'));
-        dispatch(setFilter(newFilterIndex, 'value', filterValues, 'map'));
-        dispatch(setFilter(newFilterIndex, 'enabled', true, 'map'));
-      }, 100);
-    }, 200);
-  }, [datasetInfo, dispatch, clearSeverityFilter, reduxFilters]);
-
-  const handleSeveritySelect = useCallback((severity) => {
-    let newSelectedSeverities;
+    }, 50);
     
-    if (severity === 'All Levels') {
-      newSelectedSeverities = ['All Levels'];
-      clearSeverityFilter();
+    // Configure the new filter after it's been added
+    setTimeout(() => {
+      // Get current filters state after adding the new filter
+      const currentState = reduxFilters || [];
+      // The new filter will be at the end of the array
+      const newFilterIndex = currentState.length;
+      
+      // Set filter properties step by step
+      dispatch(setFilter(newFilterIndex, 'dataId', [datasetInfo.datasetId], 'map'));
+      dispatch(setFilter(newFilterIndex, 'fieldIdx', [datasetInfo.fieldIndex], 'map'));
+      dispatch(setFilter(newFilterIndex, 'name', [PART_OF_DAY_FIELD_NAME], 'map'));
+      dispatch(setFilter(newFilterIndex, 'type', 'multiSelect', 'map'));
+      dispatch(setFilter(newFilterIndex, 'value', filterValues, 'map'));
+      dispatch(setFilter(newFilterIndex, 'enabled', true, 'map'));
+    }, 100);
+  }, [datasetInfo, dispatch, clearPartOfDayFilters, reduxFilters]);
+
+  const handlePartOfDaySelect = useCallback((partOfDay) => {
+    let newSelectedPartOfDay;
+    
+    if (partOfDay === 'All Times') {
+      newSelectedPartOfDay = ['All Times'];
+      clearPartOfDayFilters();
     } else {
-      if (selectedSeverities.includes('All Levels')) {
-        newSelectedSeverities = [severity];
-        createFilter([severity]); 
-      } else if (selectedSeverities.includes(severity)) {
-        newSelectedSeverities = selectedSeverities.filter(s => s !== severity);
+      if (selectedPartOfDay.includes('All Times')) {
+        newSelectedPartOfDay = [partOfDay];
+        createFilter([partOfDay]); 
+      } else if (selectedPartOfDay.includes(partOfDay)) {
+        newSelectedPartOfDay = selectedPartOfDay.filter(p => p !== partOfDay);
         
-        if (newSelectedSeverities.length === 0) {
-          newSelectedSeverities = ['All Levels'];
-          clearSeverityFilter();
+        if (newSelectedPartOfDay.length === 0) {
+          newSelectedPartOfDay = ['All Times'];
+          clearPartOfDayFilters();
         } else {
-          createFilter(newSelectedSeverities);
+          createFilter(newSelectedPartOfDay);
         }
       } else {
-        newSelectedSeverities = [...selectedSeverities, severity];
-        createFilter(newSelectedSeverities);
+        newSelectedPartOfDay = [...selectedPartOfDay, partOfDay];
+        createFilter(newSelectedPartOfDay);
       }
     }
     
-    setSelectedSeverities(newSelectedSeverities);
-    onSelectionChange?.(newSelectedSeverities);
-  }, [selectedSeverities, clearSeverityFilter, createFilter, onSelectionChange]);
+    setSelectedPartOfDay(newSelectedPartOfDay);
+  }, [selectedPartOfDay, clearPartOfDayFilters, createFilter]);
 
   const getDisplayText = () => {
-    if (selectedSeverities.includes('All Levels')) return 'All Levels';
-    if (selectedSeverities.length === 1) return selectedSeverities[0];
-    if (selectedSeverities.length <= 3) return selectedSeverities.join(', ');
-    return `${selectedSeverities.length} levels selected`;
+    if (selectedPartOfDay.includes('All Times')) return 'All Times';
+    if (selectedPartOfDay.length === 1) return selectedPartOfDay[0];
+    if (selectedPartOfDay.length <= 3) return selectedPartOfDay.join(', ');
+    return `${selectedPartOfDay.length} times selected`;
   };
 
   if (!datasetInfo) {
     return (
       <div style={{ marginBottom: '8px' }}>
         <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: 'black' }}>
-          Severity Level
+          Part of Day
         </div>
         <div style={{ minWidth: '220px', display: 'flex' }}>
           <div style={{ flex: 1, padding: '12px 16px', opacity: 0.6 }}>Initializing...</div>
@@ -156,14 +168,14 @@ const SeverityDropdown = ({ selectedMainTypes, selectedSubtypes, onSelectionChan
     );
   }
 
-  const totalCount = SEVERITY_LEVELS.reduce((sum, severity) => 
-    sum + (severityCounts[severity] || 0), 0
+  const totalCount = PART_OF_DAY_CATEGORIES.reduce((sum, partOfDay) => 
+    sum + (partOfDayCounts[partOfDay] || 0), 0
   );
 
   return (
     <div style={{ marginBottom: '8px' }}>
       <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: 'black' }}>
-        Severity Level
+        Part of Day
       </div>
       <div style={{ position: 'static', minWidth: '220px', display: 'flex' }}>
         <div style={{ position: 'relative', display: 'flex', width: '100%' }}>
@@ -223,7 +235,7 @@ const SeverityDropdown = ({ selectedMainTypes, selectedSubtypes, onSelectionChan
               boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
               maxHeight: '300px',
               overflowY: 'auto',
-              zIndex: 1002,
+              zIndex: 1003,
               marginTop: '4px'
             }}>
               <div
@@ -235,34 +247,34 @@ const SeverityDropdown = ({ selectedMainTypes, selectedSubtypes, onSelectionChan
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  fontWeight: selectedSeverities.includes('All Levels') ? 'bold' : 'normal',
-                  backgroundColor: selectedSeverities.includes('All Levels') ? '#f8f9fa' : 'transparent'
+                  fontWeight: selectedPartOfDay.includes('All Times') ? 'bold' : 'normal',
+                  backgroundColor: selectedPartOfDay.includes('All Times') ? '#f8f9fa' : 'transparent'
                 }}
-                onClick={() => handleSeveritySelect('All Levels')}
+                onClick={() => handlePartOfDaySelect('All Times')}
               >
-                <span>All Levels ({totalCount})</span>
-                {selectedSeverities.includes('All Levels') && (
+                <span>All Times ({totalCount})</span>
+                {selectedPartOfDay.includes('All Times') && (
                   <span style={{ color: '#1EBBD6', fontWeight: 'bold' }}>✓</span>
                 )}
               </div>
-              {SEVERITY_LEVELS.map((severity, index) => (
+              {PART_OF_DAY_CATEGORIES.map((partOfDay, index) => (
                 <div
-                  key={severity}
+                  key={partOfDay}
                   style={{
                     padding: '12px 16px',
                     cursor: 'pointer',
                     fontSize: '14px',
-                    borderBottom: index === SEVERITY_LEVELS.length - 1 ? 'none' : '1px solid #f0f0f0',
+                    borderBottom: index === PART_OF_DAY_CATEGORIES.length - 1 ? 'none' : '1px solid #f0f0f0',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    fontWeight: selectedSeverities.includes(severity) ? 'bold' : 'normal',
-                    backgroundColor: selectedSeverities.includes(severity) ? '#e3f2fd' : 'transparent'
+                    fontWeight: selectedPartOfDay.includes(partOfDay) ? 'bold' : 'normal',
+                    backgroundColor: selectedPartOfDay.includes(partOfDay) ? '#e3f2fd' : 'transparent'
                   }}
-                  onClick={() => handleSeveritySelect(severity)}
+                  onClick={() => handlePartOfDaySelect(partOfDay)}
                 >
-                  <span>{severity} ({severityCounts[severity] || 0})</span>
-                  {selectedSeverities.includes(severity) && (
+                  <span>{partOfDay} ({partOfDayCounts[partOfDay] || 0})</span>
+                  {selectedPartOfDay.includes(partOfDay) && (
                     <span style={{ color: '#1EBBD6', fontWeight: 'bold' }}>✓</span>
                   )}
                 </div>
@@ -275,4 +287,4 @@ const SeverityDropdown = ({ selectedMainTypes, selectedSubtypes, onSelectionChan
   );
 };
 
-export default SeverityDropdown;
+export default PartOfDayDropdown;

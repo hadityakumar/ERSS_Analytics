@@ -11,6 +11,7 @@ import KDEButton from './components/KDEButton';
 import FilterDropdown from './components/FilterDropdown';
 import SubtypeDropdown from './components/SubtypeDropdown';
 import SeverityDropdown from './components/SeverityDropdown';
+import PartOfDayDropdown from './components/PartOfDayDropdown';
 import LoadingState from './components/LoadingState';
 import ErrorState from './components/ErrorState';
 import MapContainer from './components/MapContainer';
@@ -21,6 +22,7 @@ const App = () => {
   const dispatch = useDispatch();
   const [selectedMainTypes, setSelectedMainTypes] = useState(['All Types']);
   const [selectedSubtypes, setSelectedSubtypes] = useState(['All Subtypes']);
+  const [selectedSeverities, setSelectedSeverities] = useState(['All Levels']);
   
   useMapStyles();
   
@@ -38,6 +40,10 @@ const App = () => {
 
   const handleSubtypeSelectionChange = (selectedSubs) => {
     setSelectedSubtypes(selectedSubs);
+  };
+
+  const handleSeveritySelectionChange = (selectedSevs) => {
+    setSelectedSeverities(selectedSevs);
   };
 
   if (error) {
@@ -150,6 +156,11 @@ const App = () => {
                 <SeverityDropdown 
                   selectedMainTypes={selectedMainTypes} 
                   selectedSubtypes={selectedSubtypes} 
+                />
+                <PartOfDayDropdown 
+                  selectedMainTypes={selectedMainTypes} 
+                  selectedSubtypes={selectedSubtypes}
+                  selectedSeverities={selectedSeverities}
                 />
               </div>
               <div>

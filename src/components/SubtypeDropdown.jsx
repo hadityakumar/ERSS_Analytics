@@ -65,20 +65,21 @@ const SubtypeDropdown = ({ selectedMainTypes, onSelectionChange }) => {
     setSelectedSubtypes(['All Subtypes']);
   }, [selectedMainTypes]);
 
-  const clearAllFilters = useCallback(() => {
+  const reapplyMainTypeFilter = useCallback(() => {
+    if (!datasetInfo || selectedMainTypes.includes('All Types')) {
+      // Clear all filters
+      const currentFilters = reduxFilters || [];
+      for (let i = currentFilters.length - 1; i >= 0; i--) {
+        dispatch(removeFilter(i, 'map'));
+      }
+      return;
+    }
+
+    // Clear all filters and recreate main type filter
     const currentFilters = reduxFilters || [];
     for (let i = currentFilters.length - 1; i >= 0; i--) {
       dispatch(removeFilter(i, 'map'));
     }
-  }, [reduxFilters, dispatch]);
-
-  const reapplyMainTypeFilter = useCallback(() => {
-    if (!datasetInfo || selectedMainTypes.includes('All Types')) {
-      clearAllFilters();
-      return;
-    }
-
-    clearAllFilters();
 
     setTimeout(() => {
       dispatch(addFilter(datasetInfo.datasetId, 'map'));
@@ -91,32 +92,28 @@ const SubtypeDropdown = ({ selectedMainTypes, onSelectionChange }) => {
         dispatch(setFilter(0, 'enabled', true, 'map'));
       }, 100);
     }, 200);
-  }, [datasetInfo, selectedMainTypes, clearAllFilters, dispatch]);
+  }, [datasetInfo, selectedMainTypes, reduxFilters, dispatch]);
 
   const createSubtypeFilter = useCallback((filterValues) => {
     if (!datasetInfo || datasetInfo.subtypeFieldIndex === -1 || !filterValues.length) return;
     
-    const currentFilters = reduxFilters || [];
-    for (let i = currentFilters.length - 1; i >= 0; i--) {
-      const filter = currentFilters[i];
-      if (filter?.name?.[0] === SUBTYPE_FIELD_NAME) {
-        dispatch(removeFilter(i, 'map'));
-      }
-    }
+    // First, reapply main type filter to ensure it exists
+    reapplyMainTypeFilter();
     
+    // Then add subtype filter
     setTimeout(() => {
       dispatch(addFilter(datasetInfo.datasetId, 'map'));
       
       setTimeout(() => {
-        const newFilterIndex = (reduxFilters || []).length;
-        dispatch(setFilter(newFilterIndex, 'fieldIdx', [datasetInfo.subtypeFieldIndex], 'map'));
-        dispatch(setFilter(newFilterIndex, 'name', [SUBTYPE_FIELD_NAME], 'map'));
-        dispatch(setFilter(newFilterIndex, 'type', 'multiSelect', 'map'));
-        dispatch(setFilter(newFilterIndex, 'value', filterValues, 'map'));
-        dispatch(setFilter(newFilterIndex, 'enabled', true, 'map'));
-      }, 150);
-    }, 150);
-  }, [datasetInfo, dispatch, reduxFilters]);
+        // Subtype filter will be at index 1 (after main type filter at index 0)
+        dispatch(setFilter(1, 'fieldIdx', [datasetInfo.subtypeFieldIndex], 'map'));
+        dispatch(setFilter(1, 'name', [SUBTYPE_FIELD_NAME], 'map'));
+        dispatch(setFilter(1, 'type', 'multiSelect', 'map'));
+        dispatch(setFilter(1, 'value', filterValues, 'map'));
+        dispatch(setFilter(1, 'enabled', true, 'map'));
+      }, 100);
+    }, 300); // Wait for main type filter to be applied first
+  }, [datasetInfo, reapplyMainTypeFilter, dispatch]);
 
   const handleSubtypeSelect = useCallback((subtype) => {
     let newSelectedSubtypes;
@@ -144,7 +141,7 @@ const SubtypeDropdown = ({ selectedMainTypes, onSelectionChange }) => {
     }
     
     setSelectedSubtypes(newSelectedSubtypes);
-    onSelectionChange?.(newSelectedSubtypes); // Notify parent
+    onSelectionChange?.(newSelectedSubtypes);
   }, [selectedSubtypes, reapplyMainTypeFilter, createSubtypeFilter, onSelectionChange]);
 
   const getDisplayText = () => {
