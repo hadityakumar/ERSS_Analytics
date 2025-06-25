@@ -1,338 +1,382 @@
-import { processCsvData } from '@kepler.gl/processors';
-import { addDataToMap, resetMapConfig } from '@kepler.gl/actions';
+import { processCsvData, processGeojson } from '@kepler.gl/processors';
+import { addDataToMap, resetMapConfig, layerConfigChange } from '@kepler.gl/actions';
 import keplerConfig from '../config/keplerConfig.json';
-import { setDateFilter } from '../store';
 import { processingStarted, processingComplete, processingError } from '../store';
-import { DATE_FIELD_NAME } from '../components/DateRangeSelector';
+
+let geojsonLayerId = null; // Track the GeoJSON layer ID
+let geojsonLayerConfig = null; // Track the layer config ID
+let crimePointsLayerId = null; // Track the crime points layer ID
+let districtLayerId = null; // Track the district layer ID
+let districtLayerConfig = null; // Track the district layer config ID
 
 const apiMiddleware = store => next => action => {
-  // Handle initial data loading (full dataset, no date filtering)
   if (action.type === 'FETCH_CSV_DATA_INITIAL') {
     store.dispatch({ type: '@@kepler.gl/REGISTER', payload: { id: 'map' } });
     store.dispatch(processingStarted());
 
-    console.log('Fetching full CSV dataset (initial load)...');
-
-    // First trigger processing without date filter, then get the CSV
     fetch('http://localhost:5000/api/process-csv', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}) // No date filter for initial load
+      body: JSON.stringify({})
     })
       .then(response => response.json())
       .then(result => {
-        if (!result.success) {
-          throw new Error(result.error || 'CSV processing failed');
-        }
-        console.log('CSV processing completed:', result.message);
-        
-        // Now fetch the processed CSV
+        if (!result.success) throw new Error(result.error || 'Processing failed');
         return fetch('http://localhost:5000/ps_removed_dt.csv');
       })
-      .then(async response => {
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(`Failed to get full CSV: ${text}`);
-        }
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to fetch CSV');
         return response.text();
       })
       .then(csvText => {
         const parsedData = processCsvData(csvText);
-        console.log(`Loading ${parsedData.rows.length} data points (full dataset)`);
-
         loadDataToKepler(store, parsedData, 'Crime Data (Full Dataset)');
+        
+        // Load GeoJSON layers after CSV data is loaded
+        setTimeout(() => {
+          store.dispatch({ type: 'PRELOAD_GEOJSON_LAYER' });
+          store.dispatch({ type: 'PRELOAD_DISTRICT_LAYER' });
+        }, 1500);
       })
       .catch(err => store.dispatch(processingError(err.message)));
   }
 
-  // Handle filtered data loading (with date range)  
   if (action.type === 'FETCH_CSV_DATA_FILTERED') {
     store.dispatch({ type: '@@kepler.gl/REGISTER', payload: { id: 'map' } });
     store.dispatch(processingStarted());
 
     const { startDate, endDate } = action.payload;
-    console.log(`Fetching filtered CSV dataset (${startDate} to ${endDate})...`);
 
-    // Call backend to process CSV with date filter
     fetch('http://localhost:5000/api/process-csv', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        startDate: startDate,
-        endDate: endDate
-      })
+      body: JSON.stringify({ startDate, endDate })
     })
       .then(response => response.json())
       .then(result => {
-        if (!result.success) {
-          throw new Error(result.error || 'CSV processing failed');
-        }
-        console.log('Filtered CSV processing completed:', result.message);
-        
-        // Now fetch the processed CSV
+        if (!result.success) throw new Error(result.error || 'Processing failed');
         return fetch('http://localhost:5000/ps_removed_dt.csv');
       })
-      .then(async response => {
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(`Failed to get filtered CSV: ${text}`);
-        }
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to fetch filtered CSV');
         return response.text();
       })
       .then(csvText => {
         const parsedData = processCsvData(csvText);
-        console.log(`Loading ${parsedData.rows.length} data points (filtered: ${startDate} to ${endDate})`);
-
         loadDataToKepler(store, parsedData, `Crime Data (${startDate} to ${endDate})`);
       })
       .catch(err => store.dispatch(processingError(err.message)));
   }
 
-  // Keep the old FETCH_CSV_DATA for backward compatibility
-  if (action.type === 'FETCH_CSV_DATA') {
-    console.warn('FETCH_CSV_DATA is deprecated. Use FETCH_CSV_DATA_INITIAL or FETCH_CSV_DATA_FILTERED.');
-    // Redirect to initial load
-    store.dispatch({ type: 'FETCH_CSV_DATA_INITIAL' });
-  }
-
-  // Handle hotspot data loading
   if (action.type === 'LOAD_HOTSPOT_DATA') {
-    console.log('Loading hotspot analysis data...');
-
     fetch(`http://localhost:5000/hotspot_analysis_results.csv?_=${Date.now()}`, {
-      cache: 'no-store',
-      headers: {
-        'Pragma': 'no-cache',
-        'Cache-Control': 'no-cache'
-      }
+      cache: 'no-store'
     })
       .then(response => {
-        console.log('Hotspot CSV fetch response status:', response.status);
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch hotspot data: ${response.status}`);
-        }
+        if (!response.ok) throw new Error('Failed to fetch hotspot data');
         return response.text();
       })
       .then(csvText => {
-        console.log('Raw hotspot CSV received, length:', csvText.length);
-
         const parsedData = processCsvData(csvText);
-
-        console.log('Parsed hotspot data:', {
-          rowCount: parsedData.rows.length,
-          fields: parsedData.fields.map(f => f.name),
-          firstRow: parsedData.rows[0]
-        });
-
         if (parsedData.rows.length === 0) {
           alert('No hotspot data found. Please run the analysis first.');
           return;
         }
 
-        const hotspotDatasetId = `hotspot-data-${Date.now()}`;
-        const hotspotLayerId = `hotspot-layer-${Date.now()}`;
-
+        const datasetId = `hotspot-data-${Date.now()}`;
         store.dispatch(
           addDataToMap({
             datasets: [{
-              info: {
-                id: hotspotDatasetId,
-                label: 'Hotspot Analysis'
-              },
+              info: { id: datasetId, label: 'Hotspot Analysis' },
               data: parsedData
             }],
-            options: {
-              centerMap: false,
-              keepExistingConfig: true,
-              readOnly: false
-            },
+            options: { centerMap: false, keepExistingConfig: true },
             config: {
               visState: {
-                layers: [
-                  {
-                    id: hotspotLayerId,
-                    type: 'heatmap',
-                    config: {
-                      dataId: hotspotDatasetId,
-                      label: 'Hotspot Heatmap',
-                      color: [255, 107, 53],
-                      columns: {
-                        lat: 'latitude',
-                        lng: 'longitude'
+                layers: [{
+                  id: `hotspot-layer-${Date.now()}`,
+                  type: 'heatmap',
+                  config: {
+                    dataId: datasetId,
+                    label: 'Hotspot Heatmap',
+                    color: [255, 107, 53],
+                    columns: { lat: 'latitude', lng: 'longitude' },
+                    isVisible: true,
+                    visConfig: {
+                      opacity: 0.8,
+                      colorRange: {
+                        colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
                       },
-                      isVisible: true,
-                      visConfig: {
-                        opacity: 0.8,
-                        colorRange: {
-                          name: 'Global Warming',
-                          type: 'sequential',
-                          category: 'Uber',
-                          colors: [
-                            '#5A1846',
-                            '#900C3F',
-                            '#C70039',
-                            '#E3611C',
-                            '#F1920E',
-                            '#FFC300'
-                          ]
-                        },
-                        radius: 60,
-                        intensity: 1,
-                        threshold: 0.05
-                      },
-                      weightField: {
-                        name: 'gi_star',
-                        type: 'real'
-                      }
-                    }
+                      radius: 60,
+                      intensity: 1,
+                      threshold: 0.05
+                    },
+                    weightField: { name: 'gi_star', type: 'real' }
                   }
-                ]
+                }]
               }
             }
           })
         );
-
-        console.log('Hotspot heatmap layer added successfully');
       })
-      .catch(error => {
-        console.error('Error loading hotspot data:', error);
-        alert(`Failed to load hotspot data: ${error.message}`);
-      });
+      .catch(error => alert(`Failed to load hotspot data: ${error.message}`));
   }
 
-  // Handle KDE data loading
   if (action.type === 'LOAD_KDE_DATA') {
-    console.log('Loading KDE analysis data...');
-
     fetch(`http://localhost:5000/kde_analysis_results.csv?_=${Date.now()}`, {
-      cache: 'no-cache',
-      headers: {
-        'Pragma': 'no-cache',
-        'Cache-Control': 'no-cache'
-      }
+      cache: 'no-cache'
     })
       .then(response => {
-        console.log('KDE CSV fetch response status:', response.status);
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch KDE data: ${response.status}`);
-        }
+        if (!response.ok) throw new Error('Failed to fetch KDE data');
         return response.text();
       })
       .then(csvText => {
-        console.log('Raw KDE CSV received, length:', csvText.length);
-
         const parsedData = processCsvData(csvText);
-
-        console.log('Parsed KDE data:', {
-          rowCount: parsedData.rows.length,
-          fields: parsedData.fields.map(f => f.name),
-          firstRow: parsedData.rows[0]
-        });
-
         if (parsedData.rows.length === 0) {
           alert('No KDE data found. Please run the analysis first.');
           return;
         }
 
-        const kdeDatasetId = `kde-data-${Date.now()}`;
-        const kdeLayerId = `kde-layer-${Date.now()}`;
-
+        const datasetId = `kde-data-${Date.now()}`;
         store.dispatch(
           addDataToMap({
             datasets: [{
-              info: {
-                id: kdeDatasetId,
-                label: 'KDE Analysis'
-              },
+              info: { id: datasetId, label: 'KDE Analysis' },
               data: parsedData
             }],
-            options: {
-              centerMap: false,
-              keepExistingConfig: true,
-              readOnly: false
-            },
+            options: { centerMap: false, keepExistingConfig: true },
             config: {
               visState: {
-                layers: [
-                  {
-                    id: kdeLayerId,
-                    type: 'heatmap',
-                    config: {
-                      dataId: kdeDatasetId,
-                      label: 'KDE Heatmap',
-                      color: [46, 134, 171],
-                      columns: {
-                        lat: 'latitude',
-                        lng: 'longitude'
+                layers: [{
+                  id: `kde-layer-${Date.now()}`,
+                  type: 'heatmap',
+                  config: {
+                    dataId: datasetId,
+                    label: 'KDE Heatmap',
+                    color: [46, 134, 171],
+                    columns: { lat: 'latitude', lng: 'longitude' },
+                    isVisible: true,
+                    visConfig: {
+                      opacity: 0.8,
+                      colorRange: {
+                        colors: ['#f7fbff', '#deebf7', '#c6dbef', '#9ecae1', '#6baed6', '#4292c6', '#2171b5', '#08519c', '#08306b']
                       },
-                      isVisible: true,
-                      visConfig: {
-                        opacity: 0.8,
-                        colorRange: {
-                          name: 'Blues',
-                          type: 'sequential',
-                          category: 'ColorBrewer',
-                          colors: [
-                            '#f7fbff',
-                            '#deebf7',
-                            '#c6dbef',
-                            '#9ecae1',
-                            '#6baed6',
-                            '#4292c6',
-                            '#2171b5',
-                            '#08519c',
-                            '#08306b'
-                          ]
-                        },
-                        radius: 60,
-                        intensity: 2,
-                        threshold: 0.01
-                      },
-                      weightField: {
-                        name: 'kde_weight',
-                        type: 'real'
-                      }
-                    }
+                      radius: 60,
+                      intensity: 2,
+                      threshold: 0.01
+                    },
+                    weightField: { name: 'kde_weight', type: 'real' }
                   }
-                ]
+                }]
               }
             }
           })
         );
-
-        console.log('KDE heatmap layer added successfully');
       })
-      .catch(error => {
-        console.error('Error loading KDE data:', error);
-        alert(`Failed to load KDE data: ${error.message}`);
-      });
+      .catch(error => alert(`Failed to load KDE data: ${error.message}`));
+  }
+
+  if (action.type === 'PRELOAD_GEOJSON_LAYER') {
+    // Load GeoJSON layer but keep it invisible initially
+    if (!geojsonLayerId) {
+      fetch(`/trv_city.geojson?_=${Date.now()}`, {
+        cache: 'no-store'
+      })
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to fetch GeoJSON data');
+          return response.json();
+        })
+        .then(geojsonData => {
+          const datasetId = `geojson-data-${Date.now()}`;
+          const layerId = `geojson-layer-${Date.now()}`;
+          geojsonLayerId = datasetId;
+          geojsonLayerConfig = layerId;
+          
+          const processedData = processGeojson(geojsonData);
+          
+          store.dispatch(
+            addDataToMap({
+              datasets: [{
+                info: { 
+                  id: datasetId, 
+                  label: 'City Boundaries'
+                },
+                data: processedData
+              }],
+              options: { centerMap: false, keepExistingConfig: true },
+              config: {
+                visState: {
+                  layers: [{
+                    id: layerId,
+                    type: 'geojson',
+                    config: {
+                      dataId: datasetId,
+                      label: 'City Boundaries',
+                      color: [255, 255, 255],
+                      columns: { 
+                        geojson: '_geojson' 
+                      },
+                      isVisible: false, // Start as invisible
+                      visConfig: {
+                        opacity: 1,
+                        strokeWidth: 30,
+                        strokeColor: [0, 0, 0],
+                        filled: false,
+                        enable3d: false,
+                        stroked: true,
+                        wireframe: false
+                      }
+                    }
+                  }]
+                }
+              }
+            })
+          );
+        })
+        .catch(error => {
+          console.error('GeoJSON loading error:', error);
+          alert(`Failed to load city boundaries: ${error.message}`);
+        });
+    }
+  }
+
+  if (action.type === 'PRELOAD_DISTRICT_LAYER') {
+    // Load District layer but keep it invisible initially
+    if (!districtLayerId) {
+      fetch(`/trv_district.geojson?_=${Date.now()}`, {
+        cache: 'no-store'
+      })
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to fetch District data');
+          return response.json();
+        })
+        .then(districtData => {
+          const datasetId = `district-data-${Date.now()}`;
+          const layerId = `district-layer-${Date.now()}`;
+          districtLayerId = datasetId;
+          districtLayerConfig = layerId;
+          
+          const processedData = processGeojson(districtData);
+          
+          store.dispatch(
+            addDataToMap({
+              datasets: [{
+                info: { 
+                  id: datasetId, 
+                  label: 'Districts'
+                },
+                data: processedData
+              }],
+              options: { centerMap: false, keepExistingConfig: true },
+              config: {
+                visState: {
+                  layers: [{
+                    id: layerId,
+                    type: 'geojson',
+                    config: {
+                      dataId: datasetId,
+                      label: 'Districts',
+                      color: [255, 165, 0],
+                      columns: { 
+                        geojson: '_geojson' 
+                      },
+                      isVisible: false, // Start as invisible
+                      visConfig: {
+                        opacity: 1,
+                        strokeWidth: 50,
+                        strokeColor: [0, 0, 0],
+                        filled: false,
+                        enable3d: false,
+                        stroked: true,
+                        wireframe: false
+                      }
+                    }
+                  }]
+                }
+              }
+            })
+          );
+        })
+        .catch(error => {
+          console.error('District loading error:', error);
+          alert(`Failed to load districts: ${error.message}`);
+        });
+    }
+  }
+
+  if (action.type === 'TOGGLE_GEOJSON_VISIBILITY') {
+    if (geojsonLayerConfig) {
+      const { isVisible } = action.payload;
+      
+      // Get the current state to find the layer
+      const state = store.getState();
+      const keplerState = state.keplerGl?.map;
+      
+      if (keplerState && keplerState.visState && keplerState.visState.layers) {
+        const currentLayer = keplerState.visState.layers.find(layer => layer.id === geojsonLayerConfig);
+        
+        if (currentLayer) {
+          // Use the layerConfigChange action
+          store.dispatch(layerConfigChange(currentLayer, { isVisible }, 'map'));
+        }
+      }
+    }
+  }
+
+  if (action.type === 'TOGGLE_DISTRICT_VISIBILITY') {
+    if (districtLayerConfig) {
+      const { isVisible } = action.payload;
+      
+      // Get the current state to find the layer
+      const state = store.getState();
+      const keplerState = state.keplerGl?.map;
+      
+      if (keplerState && keplerState.visState && keplerState.visState.layers) {
+        const currentLayer = keplerState.visState.layers.find(layer => layer.id === districtLayerConfig);
+        
+        if (currentLayer) {
+          // Use the layerConfigChange action
+          store.dispatch(layerConfigChange(currentLayer, { isVisible }, 'map'));
+        }
+      }
+    }
+  }
+
+  if (action.type === 'TOGGLE_CRIME_POINTS_VISIBILITY') {
+    const { isVisible } = action.payload;
+    
+    // Get the current state to find the crime points layer
+    const state = store.getState();
+    const keplerState = state.keplerGl?.map;
+    
+    if (keplerState && keplerState.visState && keplerState.visState.layers) {
+      // Find the crime points layer (usually the first layer or one with point type)
+      const crimePointsLayer = keplerState.visState.layers.find(layer => 
+        layer.type === 'point' || 
+        layer.config.label.includes('Crime') ||
+        layer.config.dataId.includes('csv-data') ||
+        layer.id.includes('points-layer')
+      );
+      
+      if (crimePointsLayer) {
+        crimePointsLayerId = crimePointsLayer.id; // Store for future reference
+        store.dispatch(layerConfigChange(crimePointsLayer, { isVisible }, 'map'));
+      }
+    }
   }
 
   return next(action);
 };
 
 function loadDataToKepler(store, parsedData, label) {
-  console.log('CSV Data Preview:', {
-    firstRow: parsedData.rows[0] || 'No data',
-    fields: parsedData.fields,
-    rowCount: parsedData.rows.length
-  });
-
   if (parsedData.rows.length === 0) {
-    console.error('No data points in the CSV file!');
     store.dispatch(processingError('No data points found in the CSV file.'));
     return;
   }
 
-  // Create unique dataset ID
   const datasetId = `csv-data-${Date.now()}`;
+  const config = JSON.parse(JSON.stringify(keplerConfig));
   
-  // Use the original keplerConfig but update dataId references
-  const config = JSON.parse(JSON.stringify(keplerConfig)); // Deep clone
-  
-  // Update all dataId references to match the new dataset
   config.config.visState.filters.forEach(filter => {
     if (filter.dataId && Array.isArray(filter.dataId)) {
       filter.dataId = [datasetId];
@@ -343,11 +387,15 @@ function loadDataToKepler(store, parsedData, label) {
     if (layer.config && layer.config.dataId) {
       layer.config.dataId = datasetId;
     }
-    // Update layer ID to be unique
-    layer.id = `points-layer-${Date.now()}`;
+    const layerId = `points-layer-${Date.now()}`;
+    layer.id = layerId;
+    
+    // Store the crime points layer ID when it's created
+    if (layer.type === 'point') {
+      crimePointsLayerId = layerId;
+    }
   });
   
-  // Update tooltip references
   if (config.config.visState.interactionConfig.tooltip.fieldsToShow) {
     const oldDataId = Object.keys(config.config.visState.interactionConfig.tooltip.fieldsToShow)[0];
     if (oldDataId) {
@@ -364,17 +412,11 @@ function loadDataToKepler(store, parsedData, label) {
     store.dispatch(
       addDataToMap({
         datasets: [{ info: { id: datasetId, label }, data: parsedData }],
-        options: {
-          centerMap: true,
-          keepExistingConfig: false,
-          readOnly: false
-        },
+        options: { centerMap: true, keepExistingConfig: false },
         config: config.config
       })
     );
   }, 100);
-
-  console.log(`${label} loaded successfully`);
 }
 
 export default apiMiddleware;

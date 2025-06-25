@@ -5,6 +5,9 @@ import { Provider, useDispatch, useSelector } from 'react-redux';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import CenterButton from './components/CenterButton';
+import ToggleLayerButton from './components/ToggleLayerButton';
+import ToggleCrimePointsButton from './components/ToggleCrimePointsButton';
+import ToggleDistrictButton from './components/ToggleDistrictButton';
 import DateRangeSelector from './components/DateRangeSelector';
 import HotspotButton from './components/HotspotButton';
 import KDEButton from './components/KDEButton';
@@ -70,63 +73,22 @@ const App = () => {
             gap: '10px'
           }}>
             
-            {/* Left panels */}
+            {/* Left content */}
             <div style={{
               flex: '1',
               display: 'flex',
               flexDirection: 'column',
               gap: '10px'
             }}>
+              {/* Top panel with controls */}
               <div style={{
-                flex: '0.44',
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                borderRadius: '5px',
-                padding: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'black',
-                fontSize: '18px',
-                boxShadow: '0 4px 20px black',
-                border: '1px solid black'
-              }}>
-                Top Left Panel
-              </div>
-              
-              <div style={{
-                flex: '1',
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                borderRadius: '5px',
-                padding: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'black',
-                fontSize: '18px',
-                boxShadow: '0 4px 20px black',
-                border: '1px solid black'
-              }}>
-                Bottom Left Panel
-              </div>
-            </div>
-
-            {/* Center panels */}
-            <div style={{
-              flex: '1',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px'
-            }}>
-              {/* Controls */}
-              <div style={{
-                flex: '0.35',
+                height: '35%',
                 backgroundColor: 'rgba(255, 255, 255, 0.95)',
                 borderRadius: '5px',
                 padding: '8px',
                 boxShadow: '0 4px 20px black',
                 border: '1px solid black',
-                overflow: 'auto',
-                minHeight: '32.3%'
+                overflow: 'auto'
               }}>
                 <div style={{
                   display: 'flex',
@@ -158,38 +120,81 @@ const App = () => {
                   <DateRangeSelector />
                 </div>
               </div>
-              
-              {/* Map */}
+
+              {/* Bottom row */}
               <div style={{
-                flex: '2',
-                position: 'relative',
-                borderRadius: '5px',
-                overflow: 'hidden',
-                boxShadow: '0 4px 20px black',
-                border: '1px solid black'
-              }}>
-                <MapContainer />
-                <CenterButton />
-              </div>
-              
-              {/* Status */}
-              <div style={{
-                height: '30px',
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                borderRadius: '5px',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'black',
-                fontSize: '14px',
-                boxShadow: '0 4px 20px black',
-                border: '1px solid black'
+                flexDirection: 'row',
+                gap: '10px',
+                flex: '1'
               }}>
-                Status Bar
+                {/* Left panels */}
+                <div style={{
+                  flex: '1',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px'
+                }}>
+                  <div style={{
+                    flex: '1',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    borderRadius: '5px',
+                    padding: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'black',
+                    fontSize: '18px',
+                    boxShadow: '0 4px 20px black',
+                    border: '1px solid black'
+                  }}>
+                    Bottom Left Panel
+                  </div>
+                </div>
+
+                {/* Center panels */}
+                <div style={{
+                  flex: '1',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px'
+                }}>
+                  {/* Map */}
+                  <div style={{
+                    flex: '1',
+                    position: 'relative',
+                    borderRadius: '5px',
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 20px black',
+                    border: '1px solid black'
+                  }}>
+                    <MapContainer />
+                    <CenterButton />
+                    <ToggleLayerButton />
+                    <ToggleCrimePointsButton />
+                    <ToggleDistrictButton />
+                  </div>
+                  
+                  {/* Status */}
+                  <div style={{
+                    height: '30px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    borderRadius: '5px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'black',
+                    fontSize: '14px',
+                    boxShadow: '0 4px 20px black',
+                    border: '1px solid black'
+                  }}>
+                    Status Bar
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Right sidebar */}
+            {/* Right sidebar - Tools panel spanning full height */}
             <div style={{
               width: '110px',
               backgroundColor: 'rgba(255, 255, 255, 0.95)',
