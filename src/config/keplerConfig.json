@@ -3,31 +3,6 @@
   "config": {
     "visState": {
       "filters": [
-        {
-          "dataId": [
-            "csv-data-1750660804357"
-          ],
-          "id": "26wvg3paa",
-          "name": [
-            "signal_lan"
-          ],
-          "type": "timeRange",
-          "value": [
-            1704068077000,
-            1735689002000
-          ],
-          "plotType": {
-            "interval": "2-day",
-            "defaultTimeFormat": "L",
-            "type": "histogram",
-            "aggregation": "sum"
-          },
-          "animationWindow": "free",
-          "yAxis": null,
-          "view": "minified",
-          "speed": 1,
-          "enabled": true
-        }
       ],
       "layers": [
         {

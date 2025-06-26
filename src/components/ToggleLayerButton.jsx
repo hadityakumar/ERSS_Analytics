@@ -1,12 +1,31 @@
-import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 
 const ToggleLayerButton = () => {
   const dispatch = useDispatch();
-  const [isLayerVisible, setIsLayerVisible] = useState(false); // Start as false since layer is preloaded as invisible
+  const [isLayerVisible, setIsLayerVisible] = useState(false);
+  
+  // Get Kepler.gl state to check actual layer visibility
+  const keplerState = useSelector(state => state.keplerGl?.map);
+
+  // Sync button state with actual layer visibility
+  useEffect(() => {
+    if (keplerState && keplerState.visState && keplerState.visState.layers) {
+      const cityLayer = keplerState.visState.layers.find(layer => 
+        layer.config.label === 'City Boundaries' ||
+        (layer.type === 'geojson' && layer.config.dataId.includes('geojson-data'))
+      );
+      
+      if (cityLayer) {
+        setIsLayerVisible(cityLayer.config.isVisible);
+      }
+    }
+  }, [keplerState]);
 
   const handleToggleLayer = () => {
     const newVisibility = !isLayerVisible;
+    
+    console.log('Toggle city boundaries:', newVisibility);
     
     dispatch({ 
       type: 'TOGGLE_GEOJSON_VISIBILITY', 

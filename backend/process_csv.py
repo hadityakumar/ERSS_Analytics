@@ -1,14 +1,12 @@
 import pandas as pd
 import numpy as np
 import argparse
+import json
+import sys
+import os
 from sklearn.neighbors import BallTree
 from datetime import datetime
-
-# Set up argument parser for date filtering
-parser = argparse.ArgumentParser(description='Process CSV data with optional date filtering.')
-parser.add_argument('--start-date', type=str, help='Start date for filtering (YYYY-MM-DD)')
-parser.add_argument('--end-date', type=str, help='End date for filtering (YYYY-MM-DD)')
-args = parser.parse_args()
+from shapely.geometry import Point, shape
 
 def get_part_of_day(hour):
     """
@@ -24,69 +22,158 @@ def get_part_of_day(hour):
     else:  # 0 <= hour < 6
         return 'NIGHT'
 
-print("Starting CSV processing...")
-
-try:
-    # Load data
-    csv1 = pd.read_csv('csv_use_new.csv')
-    csv2 = pd.read_csv('police_station.csv')
-    
-    if 'signal_lan' in csv1.columns:
-        csv1['signal_lan'] = pd.to_datetime(csv1['signal_lan'], format='%Y/%m/%d %H:%M:%S.%f')
+def load_city_boundary(geojson_path):
+    """
+    Load city boundary from GeoJSON file and return shapely geometry objects
+    """
+    try:
+        with open(geojson_path, 'r') as f:
+            geojson_data = json.load(f)
         
-        # Create part of day column
-        csv1['part_of_day'] = csv1['signal_lan'].dt.hour.apply(get_part_of_day)
-        print(f"Added 'part_of_day' column with categories: {csv1['part_of_day'].value_counts().to_dict()}")
-    
-    if args.start_date and args.end_date:
-        start_date = pd.to_datetime(args.start_date)
-        end_date = pd.to_datetime(args.end_date)
+        geometries = []
+        for feature in geojson_data['features']:
+            geom = shape(feature['geometry'])
+            geometries.append(geom)
         
-        print(f"Filtering data from {start_date} to {end_date}")
-        original_count = len(csv1)
+        return geometries
+    
+    except Exception as e:
+        print(f"Error loading city boundary: {str(e)}")
+        return []
+
+def point_in_city(lat, lon, city_geometries):
+    """
+    Check if a point (lat, lon) is inside any of the city boundary geometries
+    """
+    point = Point(lon, lat)
+    
+    for geom in city_geometries:
+        if geom.contains(point):
+            return True
+    
+    return False
+
+def apply_filters(df, severities=None, part_of_day=None, city_location='all'):
+    """
+    Apply filters to the processed data
+    """
+    filtered_df = df.copy()
+    
+    # Apply severity filter
+    if severities and len(severities) > 0:
+        if 'ahp_weighted_event_types_label' in filtered_df.columns:
+            filtered_df = filtered_df[filtered_df['ahp_weighted_event_types_label'].isin(severities)]
+    
+    # Apply part of day filter
+    if part_of_day and len(part_of_day) > 0:
+        if 'part_of_day' in filtered_df.columns:
+            filtered_df = filtered_df[filtered_df['part_of_day'].isin(part_of_day)]
+    
+    # Apply city location filter
+    if city_location != 'all':
+        if 'inside_trvcity' in filtered_df.columns:
+            if city_location == 'inside':
+                filtered_df = filtered_df[filtered_df['inside_trvcity'] == True]
+            elif city_location == 'outside':
+                filtered_df = filtered_df[filtered_df['inside_trvcity'] == False]
+    
+    return filtered_df
+
+def main():
+    parser = argparse.ArgumentParser(description='Process CSV data with optional date filtering and additional filters.')
+    parser.add_argument('--start-date', type=str, help='Start date for filtering (YYYY-MM-DD)')
+    parser.add_argument('--end-date', type=str, help='End date for filtering (YYYY-MM-DD)')
+    parser.add_argument('--severities', type=str, help='Comma-separated list of severity levels')
+    parser.add_argument('--part-of-day', type=str, help='Comma-separated list of part of day values')
+    parser.add_argument('--city-location', type=str, choices=['all', 'inside', 'outside'], 
+                       default='all', help='City location filter')
+    
+    args = parser.parse_args()
+    
+    # Parse comma-separated values for filters
+    severities = None
+    if args.severities:
+        severities = [s.strip() for s in args.severities.split(',')]
+    
+    part_of_day = None
+    if args.part_of_day:
+        part_of_day = [p.strip() for p in args.part_of_day.split(',')]
+    
+    # Determine if this is a filtering operation
+    is_filtering = any([severities, part_of_day, args.city_location != 'all'])
+
+    try:
+        # Load city boundary
+        city_geometries = load_city_boundary('./data/trv_city.geojson')
         
-        # Filter by date range
-        csv1 = csv1[(csv1['signal_lan'] >= start_date) & (csv1['signal_lan'] <= end_date)]
+        # Load data
+        csv1 = pd.read_csv('csv_use_new.csv')
+        csv2 = pd.read_csv('police_station.csv')
         
-        date_filtered_count = len(csv1)
-        print(f"Date filtering: {original_count - date_filtered_count} points removed, {date_filtered_count} remaining")
+        # Process datetime and add part_of_day column
+        if 'signal_lan' in csv1.columns:
+            csv1['signal_lan'] = pd.to_datetime(csv1['signal_lan'], format='%Y/%m/%d %H:%M:%S.%f')
+            csv1['part_of_day'] = csv1['signal_lan'].dt.hour.apply(get_part_of_day)
         
-        if date_filtered_count == 0:
-            print("Warning: No data points match the date range")
-    
-    # Continue with spatial filtering (removing points near police stations)
-    lat_col1, long_col1 = 'latitude', 'longitude'
-    lat_col2, long_col2 = 'latitude', 'longitude'
-
-    earth_radius = 6371000
-    X2_radians = np.radians(csv2[[lat_col2, long_col2]].values)
-    tree = BallTree(X2_radians, metric='haversine')
-
-    X1_radians = np.radians(csv1[[lat_col1, long_col1]].values)
-
-    radius_in_radians = 250 / earth_radius
-    indices = tree.query_radius(X1_radians, r=radius_in_radians)
-
-    mask = [len(idx) == 0 for idx in indices]
-
-    filtered_csv1 = csv1[mask]
-    
-    if 'signal_lan' in filtered_csv1.columns and not pd.api.types.is_datetime64_any_dtype(filtered_csv1['signal_lan']):
-        filtered_csv1['signal_lan'] = pd.to_datetime(filtered_csv1['signal_lan'])
+        # Add inside_city column
+        if city_geometries:
+            csv1['inside_trvcity'] = csv1.apply(
+                lambda row: point_in_city(row['latitude'], row['longitude'], city_geometries), 
+                axis=1
+            )
+        else:
+            csv1['inside_trvcity'] = False
         
-    # Save the filtered data
-    filtered_csv1.to_csv('ps_removed_dt.csv', index=False)
+        # Apply date filtering if provided
+        if args.start_date and args.end_date:
+            start_date = pd.to_datetime(args.start_date)
+            end_date = pd.to_datetime(args.end_date)
+            csv1 = csv1[(csv1['signal_lan'] >= start_date) & (csv1['signal_lan'] <= end_date)]
+        
+        # Continue with spatial filtering (removing points near police stations)
+        lat_col1, long_col1 = 'latitude', 'longitude'
+        lat_col2, long_col2 = 'latitude', 'longitude'
 
-    print(f"Original count: {len(csv1)}")
-    print(f"Filtered count: {len(filtered_csv1)}")
-    print(f"Removed {len(csv1) - len(filtered_csv1)} points that were within 250m of points in the second file")
-    
-    # Show part of day distribution in final filtered data
-    if 'part_of_day' in filtered_csv1.columns:
-        print(f"Part of day distribution in filtered data: {filtered_csv1['part_of_day'].value_counts().to_dict()}")
-    
-    print("CSV processing completed successfully")
-    
-except Exception as e:
-    print(f"Error processing CSV: {str(e)}")
-    exit(1)
+        earth_radius = 6371000
+        X2_radians = np.radians(csv2[[lat_col2, long_col2]].values)
+        tree = BallTree(X2_radians, metric='haversine')
+
+        X1_radians = np.radians(csv1[[lat_col1, long_col1]].values)
+
+        radius_in_radians = 250 / earth_radius
+        indices = tree.query_radius(X1_radians, r=radius_in_radians)
+
+        mask = [len(idx) == 0 for idx in indices]
+
+        processed_df = csv1[mask]
+        
+        # Ensure datetime column is properly formatted
+        if 'signal_lan' in processed_df.columns and not pd.api.types.is_datetime64_any_dtype(processed_df['signal_lan']):
+            processed_df['signal_lan'] = pd.to_datetime(processed_df['signal_lan'])
+        
+        # Apply additional filters if this is a filtering request
+        if is_filtering:
+            filtered_df = apply_filters(
+                processed_df, 
+                severities=severities, 
+                part_of_day=part_of_day, 
+                city_location=args.city_location
+            )
+            
+            # Save filtered data
+            output_file = 'filtered_data.csv'
+            filtered_df.to_csv(output_file, index=False, encoding='utf-8')
+            
+        else:
+            # Save the base processed data
+            output_file = 'ps_removed_dt.csv'
+            processed_df.to_csv(output_file, index=False)
+        
+    except Exception as e:
+        print(f"Error processing CSV: {str(e)}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+        
+if __name__ == "__main__":
+    main()

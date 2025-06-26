@@ -1,9 +1,9 @@
 import express from 'express';
-import { spawn } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
 import fs from 'fs';
+import { spawn } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,279 +14,165 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Serve static files
+app.use(express.static('.'));
+
+// Unified CSV processing endpoint that handles both initial processing and filtering
 app.post('/api/process-csv', (req, res) => {
-  console.log('Processing CSV data...');
+  console.log('=== CSV Processing Endpoint Called ===');
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
   
-  const { startDate, endDate } = req.body;
-  const hasDateFilter = startDate && endDate;
+  const { 
+    startDate, 
+    endDate, 
+    severities, 
+    partOfDay, 
+    cityLocation,
+    isFiltered = false 
+  } = req.body;
   
-  console.log(`Date filter: ${hasDateFilter ? `${startDate} to ${endDate}` : 'none (using all data)'}`);
+  console.log('Processing parameters:', {
+    startDate: startDate || 'None',
+    endDate: endDate || 'None',
+    severities: severities || 'All',
+    partOfDay: partOfDay || 'All',
+    cityLocation: cityLocation || 'all',
+    isFiltered
+  });
+
+  // Build Python command arguments
+  const pythonArgs = ['process_csv.py'];
   
-  const scriptArgs = [path.join(__dirname, 'process_csv.py')];
-  
-  if (hasDateFilter) {
-    scriptArgs.push('--start-date', startDate);
-    scriptArgs.push('--end-date', endDate);
+  // Add date filtering if provided
+  if (startDate && endDate) {
+    pythonArgs.push('--start-date', startDate);
+    pythonArgs.push('--end-date', endDate);
   }
   
-  const pythonProcess = spawn('python', scriptArgs);
-  
-  let stdoutData = '';
-  let stderrData = '';
-  
-  pythonProcess.stdout.on('data', (data) => {
-    stdoutData += data.toString();
-    console.log(`Python output: ${data}`);
-  });
-  
-  pythonProcess.stderr.on('data', (data) => {
-    stderrData += data.toString();
-    console.error(`Python error: ${data}`);
-  });
-  
-  pythonProcess.on('close', (code) => {
-    console.log(`Python process exited with code ${code}`);
+  // Add filter parameters if this is a filtered request
+  if (isFiltered) {
+    console.log('This is a filtered request, adding filter parameters...');
     
-    if (code !== 0) {
-      return res.status(500).json({ 
-        success: false, 
-        message: 'CSV processing failed', 
-        error: stderrData 
-      });
+    if (severities && severities.length > 0) {
+      pythonArgs.push('--severities', severities.join(','));
+      console.log('Added severities:', severities.join(','));
     }
     
-    res.json({ 
-      success: true, 
-      message: 'CSV processed successfully', 
-      details: stdoutData,
-      dateFilter: hasDateFilter ? { startDate, endDate } : null
-    });
-  });
-});
-
-app.post('/api/hotspot-analysis', (req, res) => {
-  console.log('Performing hotspot analysis...');
-  
-  const { startDate, endDate } = req.body;
-  const hasDateFilter = startDate && endDate;
-  
-  console.log(`Hotspot analysis with date filter: ${hasDateFilter ? `${startDate} to ${endDate}` : 'none (using all data)'}`);
-  
-  const scriptArgs = [path.join(__dirname, 'hotspot_analysis.py')];
-  
-  if (hasDateFilter) {
-    scriptArgs.push('--start-date', startDate);
-    scriptArgs.push('--end-date', endDate);
-  }
-  
-  console.log('Running Python script with args:', scriptArgs);
-  
-  const pythonProcess = spawn('python', scriptArgs);
-  
-  let stdoutData = '';
-  let stderrData = '';
-  
-  pythonProcess.stdout.on('data', (data) => {
-    stdoutData += data.toString();
-    console.log(`Hotspot analysis output: ${data}`);
-  });
-  
-  pythonProcess.stderr.on('data', (data) => {
-    stderrData += data.toString();
-    console.error(`Hotspot analysis error: ${data}`);
-  });
-  
-  pythonProcess.on('close', (code) => {
-    console.log(`Hotspot analysis process exited with code ${code}`);
-    console.log('Stdout:', stdoutData);
-    console.log('Stderr:', stderrData);
-    
-    if (code !== 0) {
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Hotspot analysis failed', 
-        error: stderrData 
-      });
+    if (partOfDay && partOfDay.length > 0) {
+      pythonArgs.push('--part-of-day', partOfDay.join(','));
+      console.log('Added part-of-day:', partOfDay.join(','));
     }
     
-    res.json({ 
-      success: true, 
-      message: 'Hotspot analysis completed successfully', 
-      details: stdoutData,
-      dateFilter: hasDateFilter ? { startDate, endDate } : null
-    });
-  });
-});
-
-// KDE analysis endpoint - ADD THIS
-app.post('/api/kde-analysis', (req, res) => {
-  console.log('Performing KDE analysis...');
-  
-  const { startDate, endDate } = req.body;
-  const hasDateFilter = startDate && endDate;
-  
-  console.log(`KDE analysis with date filter: ${hasDateFilter ? `${startDate} to ${endDate}` : 'none (using all data)'}`);
-  
-  const scriptArgs = [path.join(__dirname, 'kde_analysis.py')];
-  
-  if (hasDateFilter) {
-    scriptArgs.push('--start-date', startDate);
-    scriptArgs.push('--end-date', endDate);
+    if (cityLocation && cityLocation !== 'all') {
+      pythonArgs.push('--city-location', cityLocation);
+      console.log('Added city-location:', cityLocation);
+    }
+  } else {
+    console.log('This is NOT a filtered request, running base processing only...');
   }
-  
-  console.log('Running KDE Python script with args:', scriptArgs);
-  
-  const pythonProcess = spawn('python', scriptArgs);
-  
-  let stdoutData = '';
-  let stderrData = '';
-  
+
+  console.log('Final Python command:', `python ${pythonArgs.join(' ')}`);
+
+  // Execute Python script
+  const pythonProcess = spawn('python', pythonArgs, {
+    cwd: __dirname,
+    stdio: ['pipe', 'pipe', 'pipe']
+  });
+
+  let stdout = '';
+  let stderr = '';
+
   pythonProcess.stdout.on('data', (data) => {
-    stdoutData += data.toString();
-    console.log(`KDE analysis output: ${data}`);
+    const output = data.toString();
+    stdout += output;
+    console.log('Python stdout:', output);
   });
-  
+
   pythonProcess.stderr.on('data', (data) => {
-    stderrData += data.toString();
-    console.error(`KDE analysis error: ${data}`);
+    const error = data.toString();
+    stderr += error;
+    console.error('Python stderr:', error);
   });
-  
+
   pythonProcess.on('close', (code) => {
-    console.log(`KDE analysis process exited with code ${code}`);
-    console.log('KDE Stdout:', stdoutData);
-    console.log('KDE Stderr:', stderrData);
+    console.log(`Python process exited with code: ${code}`);
+    console.log('Full stdout:', stdout);
+    console.log('Full stderr:', stderr);
     
-    if (code !== 0) {
-      return res.status(500).json({ 
+    if (code === 0) {
+      // Determine which output file to check based on whether it's filtered
+      const outputFile = isFiltered 
+        ? path.join(__dirname, 'filtered_data.csv')
+        : path.join(__dirname, 'ps_removed_dt.csv');
+      
+      console.log('Checking for output file:', outputFile);
+      
+      if (fs.existsSync(outputFile)) {
+        const stats = fs.statSync(outputFile);
+        console.log(`Output file created successfully: ${path.basename(outputFile)} (${stats.size} bytes)`);
+        res.json({ 
+          success: true, 
+          message: isFiltered ? 'Filters applied successfully' : 'CSV processed successfully',
+          output: stdout,
+          recordsProcessed: true,
+          outputFile: path.basename(outputFile),
+          fileSize: stats.size
+        });
+      } else {
+        console.error(`Output file was not created: ${path.basename(outputFile)}`);
+        console.log('Files in directory:', fs.readdirSync(__dirname));
+        res.status(500).json({ 
+          success: false, 
+          error: `Output file was not created: ${path.basename(outputFile)}`,
+          stderr: stderr,
+          stdout: stdout,
+          filesInDirectory: fs.readdirSync(__dirname)
+        });
+      }
+    } else {
+      console.error('Python script failed with code:', code);
+      res.status(500).json({ 
         success: false, 
-        message: 'KDE analysis failed', 
-        error: stderrData 
+        error: `Processing failed (exit code: ${code})`,
+        stderr: stderr,
+        stdout: stdout
       });
     }
-    
-    res.json({ 
-      success: true, 
-      message: 'KDE analysis completed successfully', 
-      details: stdoutData,
-      dateFilter: hasDateFilter ? { startDate, endDate } : null
-    });
   });
-});
 
-// Serve hotspot results CSV
-app.get('/hotspot_analysis_results.csv', (req, res) => {
-  const csvPath = path.join(__dirname, 'hotspot_analysis_results.csv');
-  
-  console.log('Requested hotspot CSV path:', csvPath);
-  
-  if (!fs.existsSync(csvPath)) {
-    console.error('Hotspot CSV file not found:', csvPath);
-    return res.status(404).json({ 
-      error: 'Hotspot analysis results not found. Please run the analysis first.' 
-    });
-  }
-  
-  const stats = fs.statSync(csvPath);
-  console.log('Hotspot CSV file size:', stats.size, 'bytes');
-  
-  if (stats.size === 0) {
-    console.error('Hotspot CSV file is empty');
-    return res.status(404).json({ 
-      error: 'Hotspot analysis results file is empty. Please run the analysis again.' 
-    });
-  }
-  
-  res.set({
-    'Content-Type': 'text/csv',
-    'Cache-Control': 'no-cache',
-    'ETag': Date.now().toString(),
-    'Access-Control-Allow-Origin': '*'
-  });
-  
-  try {
-    const csvContent = fs.readFileSync(csvPath, 'utf8');
-    console.log('Sending hotspot CSV, first 200 chars:', csvContent.substring(0, 200));
-    res.send(csvContent);
-  } catch (error) {
-    console.error('Error reading hotspot CSV file:', error);
+  pythonProcess.on('error', (error) => {
+    console.error('Failed to start Python process:', error);
     res.status(500).json({ 
-      error: 'Error reading hotspot analysis results file.' 
+      success: false, 
+      error: `Failed to start Python process: ${error.message}`,
+      hint: 'Make sure Python is installed and accessible from command line'
     });
-  }
-});
-
-// Serve KDE results CSV - ADD THIS
-app.get('/kde_analysis_results.csv', (req, res) => {
-  const csvPath = path.join(__dirname, 'kde_analysis_results.csv');
-  
-  console.log('Requested KDE CSV path:', csvPath);
-  
-  if (!fs.existsSync(csvPath)) {
-    console.error('KDE CSV file not found:', csvPath);
-    return res.status(404).json({ 
-      error: 'KDE analysis results not found. Please run the analysis first.' 
-    });
-  }
-  
-  const stats = fs.statSync(csvPath);
-  console.log('KDE CSV file size:', stats.size, 'bytes');
-  
-  if (stats.size === 0) {
-    console.error('KDE CSV file is empty');
-    return res.status(404).json({ 
-      error: 'KDE analysis results file is empty. Please run the analysis again.' 
-    });
-  }
-  
-  res.set({
-    'Content-Type': 'text/csv',
-    'Cache-Control': 'no-cache',
-    'ETag': Date.now().toString(),
-    'Access-Control-Allow-Origin': '*'
   });
-  
-  try {
-    const csvContent = fs.readFileSync(csvPath, 'utf8');
-    console.log('Sending KDE CSV, first 200 chars:', csvContent.substring(0, 200));
-    res.send(csvContent);
-  } catch (error) {
-    console.error('Error reading KDE CSV file:', error);
-    res.status(500).json({ 
-      error: 'Error reading KDE analysis results file.' 
-    });
-  }
 });
 
-app.get('/ps_removed_dt.csv', (req, res) => {
-  const csvPath = path.join(__dirname, 'ps_removed_dt.csv');
-  
-  console.log('Requested CSV path:', csvPath);
-  
-  if (!fs.existsSync(csvPath)) {
-    console.error('CSV file not found:', csvPath);
-    return res.status(404).json({ 
-      error: 'CSV file not found. Please process the data first.' 
-    });
-  }
-  
-  res.set({
-    'Content-Type': 'text/csv',
-    'Cache-Control': 'no-cache',
-    'ETag': Date.now().toString(),
-    'Access-Control-Allow-Origin': '*'
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    message: 'Server is running',
+    timestamp: new Date().toISOString()
   });
-  
-  res.sendFile(csvPath);
 });
 
+// Test endpoint for debugging
+app.get('/api/test', (req, res) => {
+  res.json({ 
+    message: 'Test endpoint working',
+    cwd: __dirname,
+    files: fs.readdirSync(__dirname)
+  });
+});
 
-// Serve static files (this should be last)
-app.use(express.static(path.join(__dirname, '..')));
-
-// Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Backend directory: ${__dirname}`);
-  console.log(`Expected hotspot CSV location: ${path.join(__dirname, 'hotspot_analysis_results.csv')}`);
-  console.log(`Expected KDE CSV location: ${path.join(__dirname, 'kde_analysis_results.csv')}`);
+  console.log(`Working directory: ${__dirname}`);
+  console.log('Available endpoints:');
+  console.log('  POST /api/process-csv');
+  console.log('  GET  /api/health');
+  console.log('  GET  /api/test');
 });

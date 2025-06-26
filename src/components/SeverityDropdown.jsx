@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { addFilter, setFilter, removeFilter } from '@kepler.gl/actions';
+import { useSelector } from 'react-redux';
 
 const SEVERITY_FIELD_NAME = 'ahp_weighted_event_types_label'; 
 const MAIN_TYPE_FIELD_NAME = 'ahp_weighted_event_types_main_type';
@@ -8,12 +7,10 @@ const SUBTYPE_FIELD_NAME = 'ahp_weighted_event_types_sub_type';
 const SEVERITY_LEVELS = ['EMERGENCY', 'HIGH', 'MEDIUM', 'LOW'];
 
 const SeverityDropdown = ({ selectedMainTypes, selectedSubtypes, onSelectionChange }) => {
-  const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedSeverities, setSelectedSeverities] = useState(['All Levels']);
 
   const datasets = useSelector(state => state.keplerGl?.map?.visState?.datasets);
-  const reduxFilters = useSelector(state => state.keplerGl?.map?.visState?.filters);
 
   const datasetInfo = useMemo(() => {
     if (!datasets || Object.keys(datasets).length === 0) return null;
@@ -34,7 +31,8 @@ const SeverityDropdown = ({ selectedMainTypes, selectedSubtypes, onSelectionChan
   // Reset selected severities when main types or subtypes change
   useEffect(() => {
     setSelectedSeverities(['All Levels']);
-  }, [selectedMainTypes, selectedSubtypes]);
+    onSelectionChange?.(['All Levels']);
+  }, [selectedMainTypes, selectedSubtypes, onSelectionChange]);
 
   // Calculate severity counts based on current main type and subtype selections
   const severityCounts = useMemo(() => {
@@ -73,68 +71,30 @@ const SeverityDropdown = ({ selectedMainTypes, selectedSubtypes, onSelectionChan
     return counts;
   }, [datasetInfo, selectedMainTypes, selectedSubtypes]);
 
-  const existingSeverityFilterIndex = useMemo(() => {
-    const currentFilters = reduxFilters || [];
-    return currentFilters.findIndex(filter => filter?.name?.[0] === SEVERITY_FIELD_NAME);
-  }, [reduxFilters]);
-
-  const clearSeverityFilter = useCallback(() => {
-    if (existingSeverityFilterIndex !== -1) {
-      dispatch(removeFilter(existingSeverityFilterIndex, 'map'));
-    }
-  }, [existingSeverityFilterIndex, dispatch]);
-
-  const createFilter = useCallback((filterValues) => {
-    if (!datasetInfo || datasetInfo.fieldIndex === -1 || !filterValues.length) return;
-    
-    // Only clear the existing severity filter, not all filters
-    clearSeverityFilter();
-    
-    setTimeout(() => {
-      dispatch(addFilter(datasetInfo.datasetId, 'map'));
-      
-      setTimeout(() => {
-        // Find the newly added filter (it will be at the end)
-        const currentFilters = reduxFilters || [];
-        const newFilterIndex = currentFilters.length;
-        
-        dispatch(setFilter(newFilterIndex, 'fieldIdx', [datasetInfo.fieldIndex], 'map'));
-        dispatch(setFilter(newFilterIndex, 'name', [SEVERITY_FIELD_NAME], 'map'));
-        dispatch(setFilter(newFilterIndex, 'type', 'multiSelect', 'map'));
-        dispatch(setFilter(newFilterIndex, 'value', filterValues, 'map'));
-        dispatch(setFilter(newFilterIndex, 'enabled', true, 'map'));
-      }, 100);
-    }, 200);
-  }, [datasetInfo, dispatch, clearSeverityFilter, reduxFilters]);
-
   const handleSeveritySelect = useCallback((severity) => {
+    console.log('Severity selected:', severity);
+    
     let newSelectedSeverities;
     
     if (severity === 'All Levels') {
       newSelectedSeverities = ['All Levels'];
-      clearSeverityFilter();
     } else {
       if (selectedSeverities.includes('All Levels')) {
         newSelectedSeverities = [severity];
-        createFilter([severity]); 
       } else if (selectedSeverities.includes(severity)) {
         newSelectedSeverities = selectedSeverities.filter(s => s !== severity);
         
         if (newSelectedSeverities.length === 0) {
           newSelectedSeverities = ['All Levels'];
-          clearSeverityFilter();
-        } else {
-          createFilter(newSelectedSeverities);
         }
       } else {
         newSelectedSeverities = [...selectedSeverities, severity];
-        createFilter(newSelectedSeverities);
       }
     }
     
     setSelectedSeverities(newSelectedSeverities);
     onSelectionChange?.(newSelectedSeverities);
-  }, [selectedSeverities, clearSeverityFilter, createFilter, onSelectionChange]);
+  }, [selectedSeverities, onSelectionChange]);
 
   const getDisplayText = () => {
     if (selectedSeverities.includes('All Levels')) return 'All Levels';

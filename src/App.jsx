@@ -13,8 +13,10 @@ import HotspotButton from './components/HotspotButton';
 import KDEButton from './components/KDEButton';
 import FilterDropdown from './components/FilterDropdown';
 import SubtypeDropdown from './components/SubtypeDropdown';
-import SeverityDropdown from './components/SeverityDropdown';
-import PartOfDayDropdown from './components/PartOfDayDropdown';
+import SeverityRadio from './components/SeverityRadio';
+import PartOfDayRadio from './components/PartOfDayRadio';
+import InsideCityRadio from './components/InsideCityRadio';
+import ApplyFiltersButton from './components/ApplyFiltersButton';
 import PreLoader from './components/PreLoader';
 import ErrorState from './components/ErrorState';
 import MapContainer from './components/MapContainer';
@@ -28,6 +30,8 @@ const App = () => {
   const [selectedMainTypes, setSelectedMainTypes] = useState(['All Types']);
   const [selectedSubtypes, setSelectedSubtypes] = useState(['All Subtypes']);
   const [selectedSeverities, setSelectedSeverities] = useState(['All Levels']);
+  const [selectedPartOfDay, setSelectedPartOfDay] = useState(['All Times']);
+  const [selectedCityLocation, setSelectedCityLocation] = useState('all');
   
   useMapStyles();
   
@@ -80,7 +84,7 @@ const App = () => {
               flexDirection: 'column',
               gap: '10px'
             }}>
-              {/* Top panel with controls */}
+              {/* Top panel with controls - reduced height and reorganized */}
               <div style={{
                 height: '35%',
                 backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -88,36 +92,83 @@ const App = () => {
                 padding: '8px',
                 boxShadow: '0 4px 20px black',
                 border: '1px solid black',
-                overflow: 'auto'
+                overflow: 'auto',
               }}>
+                {/* First row - Analysis buttons and date selector */}
                 <div style={{
                   display: 'flex',
                   flexDirection: 'row',
-                  gap: '8px', 
-                  alignItems: 'flex-start',
-                  height: '100%'
+                  gap: '8px',
+                  marginBottom: '8px',
+                  alignItems: 'flex-start'
                 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {/* Analysis buttons column */}
+                  <div style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: '4px',
+                    minWidth: '120px'
+                  }}>
                     <HotspotButton />
                     <KDEButton />
-                    <SeverityDropdown 
-                      selectedMainTypes={selectedMainTypes} 
-                      selectedSubtypes={selectedSubtypes} 
-                    />
-                    <PartOfDayDropdown 
-                      selectedMainTypes={selectedMainTypes} 
-                      selectedSubtypes={selectedSubtypes}
+                  </div>
+                  
+                  {/* Date selector */}
+                  <div style={{ minWidth: '200px' }}>
+                    <DateRangeSelector />
+                  </div>
+                  
+                  {/* Apply filters button */}
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'flex-end',
+                    height: '100%',
+                    minWidth: '180px'
+                  }}>
+                    <ApplyFiltersButton
                       selectedSeverities={selectedSeverities}
+                      selectedPartOfDay={selectedPartOfDay}
+                      selectedCityLocation={selectedCityLocation}
                     />
                   </div>
-                  <div>
+                </div>
+
+                {/* Second row - Filter controls */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: '8px',
+                  alignItems: 'flex-start'
+                }}>
+                  {/* Main type and subtype filters */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <FilterDropdown onSelectionChange={setSelectedMainTypes} />
                     <SubtypeDropdown 
                       selectedMainTypes={selectedMainTypes} 
                       onSelectionChange={setSelectedSubtypes}
                     />
                   </div>
-                  <DateRangeSelector />
+                  
+                  {/* Severity filter */}
+                  <SeverityRadio 
+                    selectedMainTypes={selectedMainTypes} 
+                    selectedSubtypes={selectedSubtypes} 
+                    onSelectionChange={setSelectedSeverities}
+                  />
+                  
+                  {/* Part of day filter */}
+                  <PartOfDayRadio 
+                    selectedMainTypes={selectedMainTypes} 
+                    selectedSubtypes={selectedSubtypes}
+                    selectedSeverities={selectedSeverities}
+                    onSelectionChange={setSelectedPartOfDay}
+                  />
+                  
+                  {/* City location filter */}
+                  <InsideCityRadio
+                    selectedValue={selectedCityLocation}
+                    onSelectionChange={setSelectedCityLocation}
+                  />
                 </div>
               </div>
 
@@ -199,17 +250,68 @@ const App = () => {
               width: '110px',
               backgroundColor: 'rgba(255, 255, 255, 0.95)',
               borderRadius: '5px',
+              padding: '10px',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
+              justifyContent: 'flex-start',
               color: 'black',
               fontSize: '12px',
-              writingMode: 'vertical-lr',
-              textOrientation: 'mixed',
               boxShadow: '0 4px 20px black',
-              border: '1px solid black'
+              border: '1px solid black',
+              gap: '10px'
             }}>
-              Tools
+              <div style={{
+                writingMode: 'vertical-lr',
+                textOrientation: 'mixed',
+                fontWeight: 'bold',
+                marginBottom: '10px'
+              }}>
+                Tools
+              </div>
+              
+              {/* Add your tool buttons here */}
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                width: '100%'
+              }}>
+                {/* Example tool buttons */}
+                <button style={{
+                  width: '100%',
+                  padding: '8px 4px',
+                  fontSize: '10px',
+                  backgroundColor: '#f0f0f0',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}>
+                  Tool 1
+                </button>
+                <button style={{
+                  width: '100%',
+                  padding: '8px 4px',
+                  fontSize: '10px',
+                  backgroundColor: '#f0f0f0',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}>
+                  Tool 2
+                </button>
+                <button style={{
+                  width: '100%',
+                  padding: '8px 4px',
+                  fontSize: '10px',
+                  backgroundColor: '#f0f0f0',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}>
+                  Tool 3
+                </button>
+              </div>
             </div>
           </div>
         </PreLoader>

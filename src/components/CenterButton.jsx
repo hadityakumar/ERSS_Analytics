@@ -3,9 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { updateMap } from '@kepler.gl/actions';
 
 const DEFAULT_COORDINATES = {
-  latitude: 8.5241,
-  longitude: 76.9366,
-  zoom: 10
+  latitude: 8.565,
+  longitude: 76.958,
+  zoom: 9
 };
 
 const easeOutQuad = (t) => t * (2 - t);
