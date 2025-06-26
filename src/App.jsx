@@ -9,6 +9,7 @@ import ToggleLayerButton from './components/ToggleLayerButton';
 import ToggleCrimePointsButton from './components/ToggleCrimePointsButton';
 import ToggleDistrictButton from './components/ToggleDistrictButton';
 import DateRangeSelector from './components/DateRangeSelector';
+import DistrictDropdown from './components/DistrictDropdown';
 import HotspotButton from './components/HotspotButton';
 import KDEButton from './components/KDEButton';
 import FilterDropdown from './components/FilterDropdown';
@@ -20,6 +21,7 @@ import ApplyFiltersButton from './components/ApplyFiltersButton';
 import PreLoader from './components/PreLoader';
 import ErrorState from './components/ErrorState';
 import MapContainer from './components/MapContainer';
+import LocationSelector from './components/LocationSelector';
 
 import store from './store';
 import { useMapStyles } from './hooks/useMapStyles';
@@ -32,7 +34,12 @@ const App = () => {
   const [selectedSeverities, setSelectedSeverities] = useState(['All Levels']);
   const [selectedPartOfDay, setSelectedPartOfDay] = useState(['All Times']);
   const [selectedCityLocation, setSelectedCityLocation] = useState('all');
-  
+  const [selectedDateRange, setSelectedDateRange] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState({
+    district: 'All Districts',
+    city: 'All Cities'
+  });
+
   useMapStyles();
   
   const { isProcessing, error, isFiltering } = useSelector(state => 
@@ -113,12 +120,12 @@ const App = () => {
                     <KDEButton />
                   </div>
                   
-                  {/* Date selector */}
+                  {/* Updated DateRangeSelector with callback */}
                   <div style={{ minWidth: '200px' }}>
-                    <DateRangeSelector />
+                    <DateRangeSelector onDateRangeChange={setSelectedDateRange} />
                   </div>
                   
-                  {/* Apply filters button */}
+                  {/* Updated ApplyFiltersButton with date range and types */}
                   <div style={{ 
                     display: 'flex', 
                     alignItems: 'flex-end',
@@ -129,6 +136,9 @@ const App = () => {
                       selectedSeverities={selectedSeverities}
                       selectedPartOfDay={selectedPartOfDay}
                       selectedCityLocation={selectedCityLocation}
+                      selectedDateRange={selectedDateRange}
+                      selectedMainTypes={selectedMainTypes}
+                      selectedSubtypes={selectedSubtypes}
                     />
                   </div>
                 </div>
@@ -164,7 +174,10 @@ const App = () => {
                     onSelectionChange={setSelectedPartOfDay}
                   />
                   
-                  {/* City location filter */}
+                  {/* Location filter (District + City) */}
+                  <LocationSelector onLocationChange={setSelectedLocation} />
+                  
+                  {/* City location filter (Inside/Outside) - keep this separate */}
                   <InsideCityRadio
                     selectedValue={selectedCityLocation}
                     onSelectionChange={setSelectedCityLocation}

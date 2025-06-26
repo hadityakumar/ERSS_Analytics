@@ -55,27 +55,73 @@ export const handleFetchFilteredByDate = async (store, { startDate, endDate }) =
   }
 };
 
-export const handleFetchFilteredData = async (store, { severities, partOfDay, cityLocation, isFiltered }) => {
+export const handleFetchFilteredData = async (store, { 
+  severities, 
+  partOfDay, 
+  cityLocation, 
+  isFiltered, 
+  startDate, 
+  endDate, 
+  combinedFiltering,
+  mainTypes,
+  subtypes
+}) => {
   store.dispatch({ type: '@@kepler.gl/REGISTER', payload: { id: 'map' } });
   store.dispatch(processingStarted());
 
   try {
-    const hasFilters = (severities && severities.length > 0) || 
-                      (partOfDay && partOfDay.length > 0) || 
-                      (cityLocation && cityLocation !== 'all');
+    const hasDateRange = startDate && endDate;
+    const hasOtherFilters = (severities && severities.length > 0) || 
+                           (partOfDay && partOfDay.length > 0) || 
+                           (cityLocation && cityLocation !== 'all') ||
+                           (mainTypes && mainTypes.length > 0) ||
+                           (subtypes && subtypes.length > 0);
 
-    const processingResult = await processData({
-      severities,
-      partOfDay,
-      cityLocation,
-      isFiltered: isFiltered && hasFilters
-    });
+    // Prepare the payload for the backend
+    const backendPayload = {
+      isFiltered: isFiltered || hasOtherFilters
+    };
+
+    // Add date range if provided
+    if (hasDateRange) {
+      backendPayload.startDate = startDate;
+      backendPayload.endDate = endDate;
+    }
+
+    // Add other filters if provided
+    if (hasOtherFilters) {
+      if (severities && severities.length > 0) {
+        backendPayload.severities = severities;
+      }
+      if (partOfDay && partOfDay.length > 0) {
+        backendPayload.partOfDay = partOfDay;
+      }
+      if (cityLocation && cityLocation !== 'all') {
+        backendPayload.cityLocation = cityLocation;
+      }
+      if (mainTypes && mainTypes.length > 0) {
+        backendPayload.mainTypes = mainTypes;
+      }
+      if (subtypes && subtypes.length > 0) {
+        backendPayload.subtypes = subtypes;
+      }
+    }
+
+    // Add combined filtering flag
+    if (combinedFiltering) {
+      backendPayload.combinedFiltering = true;
+    }
+
+    console.log('Backend payload:', backendPayload);
+
+    const processingResult = await processData(backendPayload);
 
     if (!processingResult.success) {
       throw new Error(processingResult.error || 'Processing failed');
     }
     
-    const csvFile = (isFiltered && hasFilters) ? 'filtered_data.csv' : 'ps_removed_dt.csv';
+    // Determine which CSV file to fetch
+    const csvFile = (backendPayload.isFiltered && hasOtherFilters) ? 'filtered_data.csv' : 'ps_removed_dt.csv';
     const csvText = await fetchCsvData(csvFile);
     const parsedData = processCsvData(csvText);
     
@@ -83,8 +129,20 @@ export const handleFetchFilteredData = async (store, { severities, partOfDay, ci
       throw new Error('No data points match the applied filters.');
     }
     
+    // Build label for the dataset
     const filterLabels = [];
     
+    if (hasDateRange) {
+      const dateTimeRange = formatDateTimeRange(startDate, endDate);
+      filterLabels.push(`Date: ${dateTimeRange}`);
+    }
+    
+    if (mainTypes && mainTypes.length > 0) {
+      filterLabels.push(`Main Types: ${mainTypes.join(', ')}`);
+    }
+    if (subtypes && subtypes.length > 0) {
+      filterLabels.push(`Subtypes: ${subtypes.join(', ')}`);
+    }
     if (severities && severities.length > 0) {
       filterLabels.push(`Severity: ${severities.join(', ')}`);
     }

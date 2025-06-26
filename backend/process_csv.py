@@ -53,21 +53,35 @@ def point_in_city(lat, lon, city_geometries):
     
     return False
 
-def apply_filters(df, severities=None, part_of_day=None, city_location='all'):
+def apply_filters(df, severities=None, part_of_day=None, city_location='all', main_types=None, subtypes=None):
     """
     Apply filters to the processed data
     """
     filtered_df = df.copy()
     
+    # Apply main type filter
+    if main_types and len(main_types) > 0:
+        if 'ahp_weighted_event_types_main_type' in filtered_df.columns:
+            filtered_df = filtered_df[filtered_df['ahp_weighted_event_types_main_type'].isin(main_types)]
+            print(f"Records after main type filtering: {len(filtered_df)}")
+    
+    # Apply subtype filter
+    if subtypes and len(subtypes) > 0:
+        if 'ahp_weighted_event_types_sub_type' in filtered_df.columns:
+            filtered_df = filtered_df[filtered_df['ahp_weighted_event_types_sub_type'].isin(subtypes)]
+            print(f"Records after subtype filtering: {len(filtered_df)}")
+    
     # Apply severity filter
     if severities and len(severities) > 0:
         if 'ahp_weighted_event_types_label' in filtered_df.columns:
             filtered_df = filtered_df[filtered_df['ahp_weighted_event_types_label'].isin(severities)]
+            print(f"Records after severity filtering: {len(filtered_df)}")
     
     # Apply part of day filter
     if part_of_day and len(part_of_day) > 0:
         if 'part_of_day' in filtered_df.columns:
             filtered_df = filtered_df[filtered_df['part_of_day'].isin(part_of_day)]
+            print(f"Records after part of day filtering: {len(filtered_df)}")
     
     # Apply city location filter
     if city_location != 'all':
@@ -76,6 +90,7 @@ def apply_filters(df, severities=None, part_of_day=None, city_location='all'):
                 filtered_df = filtered_df[filtered_df['inside_trvcity'] == True]
             elif city_location == 'outside':
                 filtered_df = filtered_df[filtered_df['inside_trvcity'] == False]
+            print(f"Records after city location filtering: {len(filtered_df)}")
     
     return filtered_df
 
@@ -108,14 +123,26 @@ def main():
     parser = argparse.ArgumentParser(description='Process CSV data with optional datetime filtering and additional filters.')
     parser.add_argument('--start-date', type=str, help='Start datetime for filtering (YYYY-MM-DD HH:MM:SS)')
     parser.add_argument('--end-date', type=str, help='End datetime for filtering (YYYY-MM-DD HH:MM:SS)')
+    parser.add_argument('--main-types', type=str, help='Comma-separated list of main types')
+    parser.add_argument('--subtypes', type=str, help='Comma-separated list of subtypes')
     parser.add_argument('--severities', type=str, help='Comma-separated list of severity levels')
     parser.add_argument('--part-of-day', type=str, help='Comma-separated list of part of day values')
     parser.add_argument('--city-location', type=str, choices=['all', 'inside', 'outside'], 
                        default='all', help='City location filter')
+    parser.add_argument('--combined-filtering', action='store_true', 
+                       help='Apply both datetime and other filters together')
     
     args = parser.parse_args()
     
     # Parse comma-separated values for filters
+    main_types = None
+    if args.main_types:
+        main_types = [s.strip() for s in args.main_types.split(',')]
+    
+    subtypes = None
+    if args.subtypes:
+        subtypes = [s.strip() for s in args.subtypes.split(',')]
+    
     severities = None
     if args.severities:
         severities = [s.strip() for s in args.severities.split(',')]
@@ -125,25 +152,22 @@ def main():
         part_of_day = [p.strip() for p in args.part_of_day.split(',')]
     
     # Determine if this is a filtering operation
-    is_filtering = any([severities, part_of_day, args.city_location != 'all'])
+    has_datetime_filter = args.start_date and args.end_date
+    has_other_filters = any([main_types, subtypes, severities, part_of_day, args.city_location != 'all'])
+    is_filtering = has_other_filters or (has_datetime_filter and args.combined_filtering)
 
     try:
         # Load city boundary
         city_geometries = load_city_boundary('./data/trv_city.geojson')
         
         # Load data
-        csv1 = pd.read_csv('csv_use_new.csv')
+        csv1 = pd.read_csv('input_data.csv')
         csv2 = pd.read_csv('police_station.csv')
         
         # Process datetime and add part_of_day column
         if 'signal_lan' in csv1.columns:
-            # Try to parse the datetime column with multiple formats
             csv1['signal_lan'] = csv1['signal_lan'].apply(parse_datetime_string)
-            
-            # Remove rows where datetime parsing failed
             csv1 = csv1.dropna(subset=['signal_lan'])
-            
-            # Add part_of_day column
             csv1['part_of_day'] = csv1['signal_lan'].dt.hour.apply(get_part_of_day)
         
         # Add inside_city column
@@ -156,7 +180,7 @@ def main():
             csv1['inside_trvcity'] = False
         
         # Apply datetime filtering if provided
-        if args.start_date and args.end_date:
+        if has_datetime_filter:
             try:
                 start_datetime = parse_datetime_string(args.start_date)
                 end_datetime = parse_datetime_string(args.end_date)
@@ -191,22 +215,24 @@ def main():
         print(f"Records after police station filtering: {len(processed_df)}")
         
         # Apply additional filters if this is a filtering request
-        if is_filtering:
+        if is_filtering and has_other_filters:
             filtered_df = apply_filters(
                 processed_df, 
                 severities=severities, 
                 part_of_day=part_of_day, 
-                city_location=args.city_location
+                city_location=args.city_location,
+                main_types=main_types,
+                subtypes=subtypes
             )
             
-            print(f"Records after additional filtering: {len(filtered_df)}")
+            print(f"Records after all additional filtering: {len(filtered_df)}")
             
             # Save filtered data
             output_file = 'filtered_data.csv'
             filtered_df.to_csv(output_file, index=False, encoding='utf-8')
             
         else:
-            # Save the base processed data
+            # Save the base processed data (with datetime filter applied if provided)
             output_file = 'ps_removed_dt.csv'
             processed_df.to_csv(output_file, index=False)
         

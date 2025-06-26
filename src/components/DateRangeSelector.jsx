@@ -1,10 +1,10 @@
-import React, { useState, useCallback } from 'react';
-import { useDispatch, useSelector }   from 'react-redux';
-import { setDateFilter }              from '../store';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { setDateFilter } from '../store';
 
 export const DATE_FIELD_NAME = 'signal_lan';
 
-export default function DateRangeSelector() {
+export default function DateRangeSelector({ onDateRangeChange }) {
   const dispatch = useDispatch();
   const { startDate, endDate } = useSelector(s => s.csvProcessing);
 
@@ -13,29 +13,17 @@ export default function DateRangeSelector() {
   const [toDate, setToDate] = useState(endDate ? endDate.split(' ')[0] : '');
   const [toTime, setToTime] = useState(endDate ? endDate.split(' ')[1] || '23:59' : '23:59');
 
-  const apply = useCallback(e => {
-    e.preventDefault();
-    
-    if (!fromDate || !toDate) {
-      return alert('Please select both start and end dates');
-    }
-    
-    const startDateTime = `${fromDate} ${fromTime}:00`;
-    const endDateTime = `${toDate} ${toTime}:59`;
-    
-    if (new Date(startDateTime) > new Date(endDateTime)) {
-      return alert('Start date/time must be before end date/time');
-    }
-    
-    dispatch(setDateFilter({ startDate: startDateTime, endDate: endDateTime }));
-    dispatch({
-      type: 'FETCH_CSV_DATA_FILTERED', 
-      payload: { 
-        startDate: startDateTime, 
-        endDate: endDateTime 
-      }
-    });
-  }, [fromDate, fromTime, toDate, toTime, dispatch]);
+  // Notify parent component when date range changes
+  useEffect(() => {
+    const dateRange = {
+      fromDate,
+      fromTime,
+      toDate,
+      toTime,
+      hasDateRange: fromDate && toDate
+    };
+    onDateRangeChange?.(dateRange);
+  }, [fromDate, fromTime, toDate, toTime, onDateRangeChange]);
 
   const clear = useCallback(() => {
     dispatch(setDateFilter({ startDate: null, endDate: null }));
@@ -46,9 +34,10 @@ export default function DateRangeSelector() {
     dispatch({ type: 'FETCH_CSV_DATA_INITIAL' });
   }, [dispatch]);
 
+  const hasDateRange = fromDate && toDate;
+
   return (
-    <form
-      onSubmit={apply}
+    <div
       style={{
         position: 'static',
         background: '#000000',
@@ -132,36 +121,13 @@ export default function DateRangeSelector() {
         />
       </div>
 
-      {/* Buttons */}
+      {/* Clear button only */}
       <div style={{ display: 'flex', gap: '8px' }}>
-        <button 
-          type="submit"
-          style={{
-            flex: 1,
-            padding: '8px',
-            backgroundColor: '#ffffff',
-            color: '#000000',
-            border: '1px solid #ffffff',
-            borderRadius: '4px',
-            fontSize: '12px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseOver={(e) => {
-            e.target.style.backgroundColor = '#cccccc';
-          }}
-          onMouseOut={(e) => {
-            e.target.style.backgroundColor = '#ffffff';
-          }}
-        >
-          Apply
-        </button>
         <button 
           type="button" 
           onClick={clear}
           style={{
-            flex: 1,
+            width: '100%',
             padding: '8px',
             backgroundColor: '#333333',
             color: '#ffffff',
@@ -179,9 +145,21 @@ export default function DateRangeSelector() {
             e.target.style.backgroundColor = '#333333';
           }}
         >
-          Show All
+          Clear Date Range
         </button>
       </div>
-    </form>
+
+      {/* Status indicator */}
+      {hasDateRange && (
+        <div style={{
+          fontSize: '11px',
+          color: '#4CAF50',
+          textAlign: 'center',
+          marginTop: '4px'
+        }}>
+          Date range selected
+        </div>
+      )}
+    </div>
   );
 }
