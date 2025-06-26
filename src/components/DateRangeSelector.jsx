@@ -8,23 +8,43 @@ export default function DateRangeSelector() {
   const dispatch = useDispatch();
   const { startDate, endDate } = useSelector(s => s.csvProcessing);
 
-  const [from, setFrom] = useState(startDate||'');
-  const [to,   setTo]   = useState(endDate  ||'');
+  const [fromDate, setFromDate] = useState(startDate ? startDate.split(' ')[0] : '');
+  const [fromTime, setFromTime] = useState(startDate ? startDate.split(' ')[1] || '00:00' : '00:00');
+  const [toDate, setToDate] = useState(endDate ? endDate.split(' ')[0] : '');
+  const [toTime, setToTime] = useState(endDate ? endDate.split(' ')[1] || '23:59' : '23:59');
 
-  const apply = useCallback(e=>{
+  const apply = useCallback(e => {
     e.preventDefault();
-    if (!from||!to||new Date(from)>new Date(to)) return alert('Invalid range');
     
-    dispatch(setDateFilter({ startDate:from, endDate:to }));
-    dispatch({type:'FETCH_CSV_DATA_FILTERED', payload: { startDate: from, endDate: to }});
-  },[from,to,dispatch]);
+    if (!fromDate || !toDate) {
+      return alert('Please select both start and end dates');
+    }
+    
+    const startDateTime = `${fromDate} ${fromTime}:00`;
+    const endDateTime = `${toDate} ${toTime}:59`;
+    
+    if (new Date(startDateTime) > new Date(endDateTime)) {
+      return alert('Start date/time must be before end date/time');
+    }
+    
+    dispatch(setDateFilter({ startDate: startDateTime, endDate: endDateTime }));
+    dispatch({
+      type: 'FETCH_CSV_DATA_FILTERED', 
+      payload: { 
+        startDate: startDateTime, 
+        endDate: endDateTime 
+      }
+    });
+  }, [fromDate, fromTime, toDate, toTime, dispatch]);
 
-  const clear = useCallback(()=>{
-    dispatch(setDateFilter({ startDate:null, endDate:null }));
-    setFrom('');
-    setTo('');
-    dispatch({type:'FETCH_CSV_DATA_INITIAL'});
-  },[dispatch]);
+  const clear = useCallback(() => {
+    dispatch(setDateFilter({ startDate: null, endDate: null }));
+    setFromDate('');
+    setFromTime('00:00');
+    setToDate('');
+    setToTime('23:59');
+    dispatch({ type: 'FETCH_CSV_DATA_INITIAL' });
+  }, [dispatch]);
 
   return (
     <form
@@ -39,92 +59,129 @@ export default function DateRangeSelector() {
         display: 'flex',
         flexDirection: 'column',
         gap: '10px',
-        width: '220px'
+        width: '280px'
       }}
     >
-     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-       <label style={{ fontSize: '12px', color: '#ffffff', minWidth: '40px', fontWeight: '500' }}>From:</label>
-       <input 
-         type="date" 
-         value={from} 
-         onChange={e=>setFrom(e.target.value)}
-         style={{
-           flex: 1,
-           padding: '6px',
-           border: '1px solid #555555',
-           borderRadius: '4px',
-           fontSize: '12px',
-           backgroundColor: '#222222',
-           color: '#ffffff'
-         }}
-       />
-     </div>
-     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-       <label style={{ fontSize: '12px', color: '#ffffff', minWidth: '40px', fontWeight: '500' }}>To:</label>
-       <input 
-         type="date" 
-         value={to} 
-         onChange={e=>setTo(e.target.value)}
-         style={{
-           flex: 1,
-           padding: '6px',
-           border: '1px solid #555555',
-           borderRadius: '4px',
-           fontSize: '12px',
-           backgroundColor: '#222222',
-           color: '#ffffff'
-         }}
-       />
-     </div>
-     <div style={{ display: 'flex', gap: '8px' }}>
-       <button 
-         type="submit"
-         style={{
-           flex: 1,
-           padding: '8px',
-           backgroundColor: '#ffffff',
-           color: '#000000',
-           border: '1px solid #ffffff',
-           borderRadius: '4px',
-           fontSize: '12px',
-           fontWeight: 'bold',
-           cursor: 'pointer',
-           transition: 'all 0.2s ease'
-         }}
-         onMouseOver={(e) => {
-           e.target.style.backgroundColor = '#cccccc';
-         }}
-         onMouseOut={(e) => {
-           e.target.style.backgroundColor = '#ffffff';
-         }}
-       >
-         Apply
-       </button>
-       <button 
-         type="button" 
-         onClick={clear}
-         style={{
-           flex: 1,
-           padding: '8px',
-           backgroundColor: '#333333',
-           color: '#ffffff',
-           border: '1px solid #555555',
-           borderRadius: '4px',
-           fontSize: '12px',
-           fontWeight: 'bold',
-           cursor: 'pointer',
-           transition: 'all 0.2s ease'
-         }}
-         onMouseOver={(e) => {
-           e.target.style.backgroundColor = '#555555';
-         }}
-         onMouseOut={(e) => {
-           e.target.style.backgroundColor = '#333333';
-         }}
-       >
-         Show All
-       </button>
-     </div>
+      {/* From Date and Time */}
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <label style={{ fontSize: '12px', color: '#ffffff', minWidth: '40px', fontWeight: '500' }}>
+          From:
+        </label>
+        <input 
+          type="date" 
+          value={fromDate} 
+          onChange={e => setFromDate(e.target.value)}
+          style={{
+            flex: 1,
+            padding: '6px',
+            border: '1px solid #555555',
+            borderRadius: '4px',
+            fontSize: '12px',
+            backgroundColor: '#222222',
+            color: '#ffffff'
+          }}
+        />
+        <input 
+          type="time" 
+          value={fromTime} 
+          onChange={e => setFromTime(e.target.value)}
+          style={{
+            padding: '6px',
+            border: '1px solid #555555',
+            borderRadius: '4px',
+            fontSize: '12px',
+            backgroundColor: '#222222',
+            color: '#ffffff',
+            width: '80px'
+          }}
+        />
+      </div>
+
+      {/* To Date and Time */}
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <label style={{ fontSize: '12px', color: '#ffffff', minWidth: '40px', fontWeight: '500' }}>
+          To:
+        </label>
+        <input 
+          type="date" 
+          value={toDate} 
+          onChange={e => setToDate(e.target.value)}
+          style={{
+            flex: 1,
+            padding: '6px',
+            border: '1px solid #555555',
+            borderRadius: '4px',
+            fontSize: '12px',
+            backgroundColor: '#222222',
+            color: '#ffffff'
+          }}
+        />
+        <input 
+          type="time" 
+          value={toTime} 
+          onChange={e => setToTime(e.target.value)}
+          style={{
+            padding: '6px',
+            border: '1px solid #555555',
+            borderRadius: '4px',
+            fontSize: '12px',
+            backgroundColor: '#222222',
+            color: '#ffffff',
+            width: '80px'
+          }}
+        />
+      </div>
+
+      {/* Buttons */}
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <button 
+          type="submit"
+          style={{
+            flex: 1,
+            padding: '8px',
+            backgroundColor: '#ffffff',
+            color: '#000000',
+            border: '1px solid #ffffff',
+            borderRadius: '4px',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseOver={(e) => {
+            e.target.style.backgroundColor = '#cccccc';
+          }}
+          onMouseOut={(e) => {
+            e.target.style.backgroundColor = '#ffffff';
+          }}
+        >
+          Apply
+        </button>
+        <button 
+          type="button" 
+          onClick={clear}
+          style={{
+            flex: 1,
+            padding: '8px',
+            backgroundColor: '#333333',
+            color: '#ffffff',
+            border: '1px solid #555555',
+            borderRadius: '4px',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseOver={(e) => {
+            e.target.style.backgroundColor = '#555555';
+          }}
+          onMouseOut={(e) => {
+            e.target.style.backgroundColor = '#333333';
+          }}
+        >
+          Show All
+        </button>
+      </div>
     </form>
   );
 }

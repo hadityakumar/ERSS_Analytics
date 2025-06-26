@@ -79,10 +79,35 @@ def apply_filters(df, severities=None, part_of_day=None, city_location='all'):
     
     return filtered_df
 
+def parse_datetime_string(datetime_str):
+    """
+    Parse various datetime string formats
+    """
+    # Try different datetime formats
+    formats = [
+        '%Y-%m-%d %H:%M:%S',  # 2024-01-01 12:30:45
+        '%Y-%m-%d %H:%M',     # 2024-01-01 12:30
+        '%Y/%m/%d %H:%M:%S.%f',  # Original format
+        '%Y/%m/%d %H:%M:%S',     # Without microseconds
+        '%Y-%m-%d',           # Date only
+    ]
+    
+    for fmt in formats:
+        try:
+            return pd.to_datetime(datetime_str, format=fmt)
+        except:
+            continue
+    
+    # If none of the formats work, try pandas auto-parsing
+    try:
+        return pd.to_datetime(datetime_str)
+    except:
+        return None
+
 def main():
-    parser = argparse.ArgumentParser(description='Process CSV data with optional date filtering and additional filters.')
-    parser.add_argument('--start-date', type=str, help='Start date for filtering (YYYY-MM-DD)')
-    parser.add_argument('--end-date', type=str, help='End date for filtering (YYYY-MM-DD)')
+    parser = argparse.ArgumentParser(description='Process CSV data with optional datetime filtering and additional filters.')
+    parser.add_argument('--start-date', type=str, help='Start datetime for filtering (YYYY-MM-DD HH:MM:SS)')
+    parser.add_argument('--end-date', type=str, help='End datetime for filtering (YYYY-MM-DD HH:MM:SS)')
     parser.add_argument('--severities', type=str, help='Comma-separated list of severity levels')
     parser.add_argument('--part-of-day', type=str, help='Comma-separated list of part of day values')
     parser.add_argument('--city-location', type=str, choices=['all', 'inside', 'outside'], 
@@ -112,7 +137,13 @@ def main():
         
         # Process datetime and add part_of_day column
         if 'signal_lan' in csv1.columns:
-            csv1['signal_lan'] = pd.to_datetime(csv1['signal_lan'], format='%Y/%m/%d %H:%M:%S.%f')
+            # Try to parse the datetime column with multiple formats
+            csv1['signal_lan'] = csv1['signal_lan'].apply(parse_datetime_string)
+            
+            # Remove rows where datetime parsing failed
+            csv1 = csv1.dropna(subset=['signal_lan'])
+            
+            # Add part_of_day column
             csv1['part_of_day'] = csv1['signal_lan'].dt.hour.apply(get_part_of_day)
         
         # Add inside_city column
@@ -124,11 +155,21 @@ def main():
         else:
             csv1['inside_trvcity'] = False
         
-        # Apply date filtering if provided
+        # Apply datetime filtering if provided
         if args.start_date and args.end_date:
-            start_date = pd.to_datetime(args.start_date)
-            end_date = pd.to_datetime(args.end_date)
-            csv1 = csv1[(csv1['signal_lan'] >= start_date) & (csv1['signal_lan'] <= end_date)]
+            try:
+                start_datetime = parse_datetime_string(args.start_date)
+                end_datetime = parse_datetime_string(args.end_date)
+                
+                if start_datetime is not None and end_datetime is not None:
+                    print(f"Filtering data from {start_datetime} to {end_datetime}")
+                    mask = (csv1['signal_lan'] >= start_datetime) & (csv1['signal_lan'] <= end_datetime)
+                    csv1 = csv1[mask]
+                    print(f"Records after datetime filtering: {len(csv1)}")
+                else:
+                    print("Warning: Could not parse start or end datetime")
+            except Exception as e:
+                print(f"Error in datetime filtering: {str(e)}")
         
         # Continue with spatial filtering (removing points near police stations)
         lat_col1, long_col1 = 'latitude', 'longitude'
@@ -147,9 +188,7 @@ def main():
 
         processed_df = csv1[mask]
         
-        # Ensure datetime column is properly formatted
-        if 'signal_lan' in processed_df.columns and not pd.api.types.is_datetime64_any_dtype(processed_df['signal_lan']):
-            processed_df['signal_lan'] = pd.to_datetime(processed_df['signal_lan'])
+        print(f"Records after police station filtering: {len(processed_df)}")
         
         # Apply additional filters if this is a filtering request
         if is_filtering:
@@ -160,6 +199,8 @@ def main():
                 city_location=args.city_location
             )
             
+            print(f"Records after additional filtering: {len(filtered_df)}")
+            
             # Save filtered data
             output_file = 'filtered_data.csv'
             filtered_df.to_csv(output_file, index=False, encoding='utf-8')
@@ -168,6 +209,8 @@ def main():
             # Save the base processed data
             output_file = 'ps_removed_dt.csv'
             processed_df.to_csv(output_file, index=False)
+        
+        print(f"Data saved to {output_file}")
         
     except Exception as e:
         print(f"Error processing CSV: {str(e)}", file=sys.stderr)

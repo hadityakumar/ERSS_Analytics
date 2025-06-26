@@ -1,0 +1,28 @@
+export const DEFAULT_COORDINATES = {
+  latitude: 8.5782259865,
+  longitude: 76.95390701,
+  zoom: 11
+};
+
+export const ACTION_TYPES = {
+  FETCH_CSV_DATA_INITIAL: 'FETCH_CSV_DATA_INITIAL',
+  FETCH_CSV_DATA_FILTERED: 'FETCH_CSV_DATA_FILTERED',
+  FETCH_FILTERED_CSV_DATA: 'FETCH_FILTERED_CSV_DATA',
+  LOAD_HOTSPOT_DATA: 'LOAD_HOTSPOT_DATA',
+  LOAD_KDE_DATA: 'LOAD_KDE_DATA',
+  PRELOAD_GEOJSON_LAYER: 'PRELOAD_GEOJSON_LAYER',
+  PRELOAD_DISTRICT_LAYER: 'PRELOAD_DISTRICT_LAYER',
+  TOGGLE_GEOJSON_VISIBILITY: 'TOGGLE_GEOJSON_VISIBILITY',
+  TOGGLE_DISTRICT_VISIBILITY: 'TOGGLE_DISTRICT_VISIBILITY',
+  TOGGLE_CRIME_POINTS_VISIBILITY: 'TOGGLE_CRIME_POINTS_VISIBILITY'
+};
+
+export const API_ENDPOINTS = {
+  PROCESS_CSV: 'http://localhost:5000/api/process-csv',
+  CSV_DATA: 'http://localhost:5000/ps_removed_dt.csv',
+  FILTERED_DATA: 'http://localhost:5000/filtered_data.csv',
+  HOTSPOT_DATA: 'http://localhost:5000/hotspot_analysis_results.csv',
+  KDE_DATA: 'http://localhost:5000/kde_analysis_results.csv',
+  CITY_GEOJSON: '/trv_city.geojson',
+  DISTRICT_GEOJSON: '/trv_district.geojson'
+};
