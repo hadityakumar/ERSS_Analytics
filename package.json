@@ -24,6 +24,7 @@
     "react-palm": "^3.3.11",
     "react-redux": "^8.1.1",
     "react-virtualized": "^9.22.3",
+    "recharts": "^3.0.2",
     "redux": "^4.2.1",
     "stream-browserify": "^3.0.0",
     "styled-components": "6.1.8",

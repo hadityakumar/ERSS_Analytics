@@ -19,7 +19,7 @@ const DistrictDropdown = ({ onSelectionChange }) => {
   };
 
   return (
-    <div style={{ position: 'static', minWidth: '220px', display: 'flex', marginBottom: '4px' }}>
+    <div style={{ position: 'static', minWidth: '220px', display: 'flex' }}>
       <div style={{ position: 'relative', display: 'flex', width: '100%' }}>
         <div style={{
           flex: '1',

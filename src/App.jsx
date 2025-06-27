@@ -9,7 +9,6 @@ import ToggleLayerButton from './components/ToggleLayerButton';
 import ToggleCrimePointsButton from './components/ToggleCrimePointsButton';
 import ToggleDistrictButton from './components/ToggleDistrictButton';
 import DateRangeSelector from './components/DateRangeSelector';
-import DistrictDropdown from './components/DistrictDropdown';
 import HotspotButton from './components/HotspotButton';
 import KDEButton from './components/KDEButton';
 import FilterDropdown from './components/FilterDropdown';
@@ -21,7 +20,9 @@ import ApplyFiltersButton from './components/ApplyFiltersButton';
 import PreLoader from './components/PreLoader';
 import ErrorState from './components/ErrorState';
 import MapContainer from './components/MapContainer';
-import LocationSelector from './components/LocationSelector';
+import DistrictDropdown from './components/DistrictDropdown';
+import TemporalTrendDropdown from './components/TemporalTrendDropdown';
+import ChartPanel from './components/ChartPanel';
 
 import store from './store';
 import { useMapStyles } from './hooks/useMapStyles';
@@ -35,10 +36,8 @@ const App = () => {
   const [selectedPartOfDay, setSelectedPartOfDay] = useState(['All Times']);
   const [selectedCityLocation, setSelectedCityLocation] = useState('all');
   const [selectedDateRange, setSelectedDateRange] = useState(null);
-  const [selectedLocation, setSelectedLocation] = useState({
-    district: 'All Districts',
-    city: 'All Cities'
-  });
+  const [selectedDistrict, setSelectedDistrict] = useState('All Districts');
+  const [selectedTemporalTrend, setSelectedTemporalTrend] = useState('Hourly');
 
   useMapStyles();
   
@@ -174,10 +173,18 @@ const App = () => {
                     onSelectionChange={setSelectedPartOfDay}
                   />
                   
-                  {/* Location filter (District + City) */}
-                  <LocationSelector onLocationChange={setSelectedLocation} />
+                  {/* District filter - standalone */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: 'black' }}>
+                      District Filter
+                    </div>
+                    <DistrictDropdown onSelectionChange={setSelectedDistrict} />
+                  </div>
                   
-                  {/* City location filter (Inside/Outside) - keep this separate */}
+                  {/* Temporal Trend Type filter */}
+                  <TemporalTrendDropdown onSelectionChange={setSelectedTemporalTrend} />
+                  
+                  {/* City location filter (Inside/Outside) */}
                   <InsideCityRadio
                     selectedValue={selectedCityLocation}
                     onSelectionChange={setSelectedCityLocation}
@@ -203,16 +210,11 @@ const App = () => {
                     flex: '1',
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
                     borderRadius: '5px',
-                    padding: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'black',
-                    fontSize: '18px',
                     boxShadow: '0 4px 20px black',
-                    border: '1px solid black'
+                    border: '1px solid black',
+                    overflow: 'hidden'
                   }}>
-                    Bottom Left Panel
+                    <ChartPanel />
                   </div>
                 </div>
 
