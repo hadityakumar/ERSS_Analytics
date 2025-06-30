@@ -100,9 +100,6 @@ const SeverityRadio = ({ selectedMainTypes, selectedSubtypes, onSelectionChange 
   if (!datasetInfo) {
     return (
       <div style={{ marginBottom: '8px' }}>
-        <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: 'black' }}>
-          Severity Level
-        </div>
         <div style={{ 
           backgroundColor: 'rgba(255, 255, 255, 0.95)',
           border: '1px solid #ddd',
@@ -124,9 +121,6 @@ const SeverityRadio = ({ selectedMainTypes, selectedSubtypes, onSelectionChange 
 
   return (
     <div style={{ marginBottom: '8px' }}>
-      <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: 'black' }}>
-        Severity Level
-      </div>
       <div style={{ 
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
         border: '1px solid #ddd',

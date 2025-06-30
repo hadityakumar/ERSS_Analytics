@@ -64,51 +64,44 @@ const CenterButton = () => {
   }, [dispatch, currentLat, currentLng, currentZoom]);
 
   return (
-    <div style={{
-      position: 'absolute',
-      top: '20px',
-      right: '20px',
-      zIndex: 1000
-    }}>
-      <button
-        onClick={centerMap}
+    <button
+      onClick={centerMap}
+      style={{
+        width: '35px',
+        height: '35px',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        border: 'none',
+        borderRadius: '17.5px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'all 0.2s ease',
+        backdropFilter: 'blur(4px)',
+        padding: '6px',
+      }}
+      onMouseOver={(e) => {
+        e.target.style.backgroundColor = 'rgba(30, 187, 214, 0.9)';
+        e.target.style.transform = 'scale(1.05)';
+      }}
+      onMouseOut={(e) => {
+        e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+        e.target.style.transform = 'scale(1)';
+      }}
+      title="Center map on Trivandrum"
+    >
+      <img 
+        src="/center-circle-svgrepo-com.svg" 
+        alt="Center" 
         style={{
-          width: '35px',
-          height: '35px',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          border: 'none',
-          borderRadius: '17.5px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'all 0.2s ease',
-          backdropFilter: 'blur(4px)',
-          padding: '6px',
+          width: '20px',
+          height: '20px',
+          filter: 'invert(0.2)',
+          pointerEvents: 'none'
         }}
-        onMouseOver={(e) => {
-          e.target.style.backgroundColor = 'rgba(30, 187, 214, 0.9)';
-          e.target.style.transform = 'scale(1.05)';
-        }}
-        onMouseOut={(e) => {
-          e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
-          e.target.style.transform = 'scale(1)';
-        }}
-        title="Center map on Trivandrum"
-      >
-        <img 
-          src="/center-circle-svgrepo-com.svg" 
-          alt="Center" 
-          style={{
-            width: '20px',
-            height: '20px',
-            filter: 'invert(0.2)',
-            pointerEvents: 'none'
-          }}
-        />
-      </button>
-    </div>
+      />
+    </button>
   );
 };
 

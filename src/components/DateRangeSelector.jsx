@@ -25,35 +25,26 @@ export default function DateRangeSelector({ onDateRangeChange }) {
     onDateRangeChange?.(dateRange);
   }, [fromDate, fromTime, toDate, toTime, onDateRangeChange]);
 
-  const clear = useCallback(() => {
-    dispatch(setDateFilter({ startDate: null, endDate: null }));
+  const clearFromFields = useCallback(() => {
     setFromDate('');
     setFromTime('00:00');
+  }, []);
+
+  const clearToFields = useCallback(() => {
     setToDate('');
     setToTime('23:59');
-    dispatch({ type: 'FETCH_CSV_DATA_INITIAL' });
-  }, [dispatch]);
-
-  const hasDateRange = fromDate && toDate;
+  }, []);
 
   return (
-    <div
-      style={{
-        position: 'static',
-        background: '#000000',
-        padding: '12px',
-        borderRadius: '8px',
-        border: '1px solid #333333',
-        boxShadow: '0 2px 8px rgba(255,255,255,0.1)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        width: '280px'
-      }}
-    >
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+      width: '100%'
+    }}>
       {/* From Date and Time */}
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-        <label style={{ fontSize: '12px', color: '#ffffff', minWidth: '40px', fontWeight: '500' }}>
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+        <label style={{ fontSize: '11px', color: '#333', minWidth: '30px', fontWeight: '500' }}>
           From:
         </label>
         <input 
@@ -62,12 +53,14 @@ export default function DateRangeSelector({ onDateRangeChange }) {
           onChange={e => setFromDate(e.target.value)}
           style={{
             flex: 1,
-            padding: '6px',
-            border: '1px solid #555555',
-            borderRadius: '4px',
-            fontSize: '12px',
-            backgroundColor: '#222222',
-            color: '#ffffff'
+            padding: '2px 6px',
+            border: '1px solid #000',
+            borderRadius: '3px',
+            fontSize: '11px',
+            backgroundColor: '#fff',
+            color: '#000',
+            height: '24px',
+            width: '52px'
           }}
         />
         <input 
@@ -75,20 +68,49 @@ export default function DateRangeSelector({ onDateRangeChange }) {
           value={fromTime} 
           onChange={e => setFromTime(e.target.value)}
           style={{
-            padding: '6px',
-            border: '1px solid #555555',
-            borderRadius: '4px',
-            fontSize: '12px',
-            backgroundColor: '#222222',
-            color: '#ffffff',
-            width: '80px'
+            padding: '4px 6px',
+            border: '1px solid #000',
+            borderRadius: '3px',
+            fontSize: '11px',
+            backgroundColor: '#fff',
+            color: '#000',
+            width: '70px',
+            height: '24px'
           }}
         />
+        {/* Clear from fields button */}
+        <button
+          onClick={clearFromFields}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '2px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '16px',
+            height: '16px',
+            borderRadius: '2px'
+          }}
+          onMouseOver={(e) => {
+            e.target.style.backgroundColor = '#f0f0f0';
+          }}
+          onMouseOut={(e) => {
+            e.target.style.backgroundColor = 'transparent';
+          }}
+          title="Clear from date and time"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
 
       {/* To Date and Time */}
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-        <label style={{ fontSize: '12px', color: '#ffffff', minWidth: '40px', fontWeight: '500' }}>
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+        <label style={{ fontSize: '11px', color: '#333', minWidth: '30px', fontWeight: '500' }}>
           To:
         </label>
         <input 
@@ -97,12 +119,14 @@ export default function DateRangeSelector({ onDateRangeChange }) {
           onChange={e => setToDate(e.target.value)}
           style={{
             flex: 1,
-            padding: '6px',
-            border: '1px solid #555555',
-            borderRadius: '4px',
-            fontSize: '12px',
-            backgroundColor: '#222222',
-            color: '#ffffff'
+            padding: '4px 6px',
+            border: '1px solid #000',
+            borderRadius: '3px',
+            fontSize: '11px',
+            backgroundColor: '#fff',
+            color: '#000',
+            height: '24px',
+            width: '52px'
           }}
         />
         <input 
@@ -110,56 +134,45 @@ export default function DateRangeSelector({ onDateRangeChange }) {
           value={toTime} 
           onChange={e => setToTime(e.target.value)}
           style={{
-            padding: '6px',
-            border: '1px solid #555555',
-            borderRadius: '4px',
-            fontSize: '12px',
-            backgroundColor: '#222222',
-            color: '#ffffff',
-            width: '80px'
+            padding: '4px 6px',
+            border: '1px solid #000',
+            borderRadius: '3px',
+            fontSize: '11px',
+            backgroundColor: '#fff',
+            color: '#000',
+            width: '70px',
+            height: '24px'
           }}
         />
-      </div>
-
-      {/* Clear button only */}
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <button 
-          type="button" 
-          onClick={clear}
+        {/* Clear to fields button */}
+        <button
+          onClick={clearToFields}
           style={{
-            width: '100%',
-            padding: '8px',
-            backgroundColor: '#333333',
-            color: '#ffffff',
-            border: '1px solid #555555',
-            borderRadius: '4px',
-            fontSize: '12px',
-            fontWeight: 'bold',
+            background: 'none',
+            border: 'none',
             cursor: 'pointer',
-            transition: 'all 0.2s ease'
+            padding: '2px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '16px',
+            height: '16px',
+            borderRadius: '2px'
           }}
           onMouseOver={(e) => {
-            e.target.style.backgroundColor = '#555555';
+            e.target.style.backgroundColor = '#f0f0f0';
           }}
           onMouseOut={(e) => {
-            e.target.style.backgroundColor = '#333333';
+            e.target.style.backgroundColor = 'transparent';
           }}
+          title="Clear to date and time"
         >
-          Clear Date Range
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
         </button>
       </div>
-
-      {/* Status indicator */}
-      {hasDateRange && (
-        <div style={{
-          fontSize: '11px',
-          color: '#4CAF50',
-          textAlign: 'center',
-          marginTop: '4px'
-        }}>
-          Date range selected
-        </div>
-      )}
     </div>
   );
 }

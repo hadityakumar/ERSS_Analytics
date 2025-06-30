@@ -4,10 +4,7 @@ import { Provider, useDispatch, useSelector } from 'react-redux';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
-import CenterButton from './components/CenterButton';
-import ToggleLayerButton from './components/ToggleLayerButton';
-import ToggleCrimePointsButton from './components/ToggleCrimePointsButton';
-import ToggleDistrictButton from './components/ToggleDistrictButton';
+import MapPanel from './components/MapPanel';
 import DateRangeSelector from './components/DateRangeSelector';
 import HotspotButton from './components/HotspotButton';
 import KDEButton from './components/KDEButton';
@@ -90,9 +87,9 @@ const App = () => {
               flexDirection: 'column',
               gap: '10px'
             }}>
-              {/* Top panel with controls - reduced height and reorganized */}
+              {/* Top panel with controls - Fixed column widths and separators */}
               <div style={{
-                height: '35%',
+                height: '237px',
                 backgroundColor: 'rgba(255, 255, 255, 0.95)',
                 borderRadius: '5px',
                 padding: '8px',
@@ -100,37 +97,208 @@ const App = () => {
                 border: '1px solid black',
                 overflow: 'auto',
               }}>
-                {/* First row - Analysis buttons and date selector */}
                 <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '239px 1px 321px 1px 284px 1px 284px 1fr',
+                  gap: '0',
+                  height: '100%',
+                  alignItems: 'start'
+                }}>
+                  {/* Column 1: Date Range - 239px */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    paddingRight: '8px'
+                  }}>
+                    <h3 style={{
+                      margin: '0',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      color: '#333',
+                      borderBottom: '2px solid #333',
+                      paddingBottom: '4px'
+                    }}>
+                      Date Range
+                    </h3>
+                    <DateRangeSelector onDateRangeChange={setSelectedDateRange} />
+                    
+                    {/* Separator line */}
+                    <div style={{
+                      height: '1px',
+                      backgroundColor: '#ddd',
+                      margin: '8px 0'
+                    }}></div>
+                    
+                    <PartOfDayRadio 
+                      selectedMainTypes={selectedMainTypes} 
+                      selectedSubtypes={selectedSubtypes}
+                      selectedSeverities={selectedSeverities}
+                      onSelectionChange={setSelectedPartOfDay}
+                    />
+                  </div>
+
+                  {/* Separator line 1 */}
+                  <div style={{
+                    width: '1px',
+                    height: '100%',
+                    backgroundColor: '#ddd'
+                  }}></div>
+
+                  {/* Column 2: Event Details - 321px */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    paddingLeft: '8px',
+                    paddingRight: '8px'
+                  }}>
+                    <h3 style={{
+                      margin: '0',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      color: '#333',
+                      borderBottom: '2px solid #333',
+                      paddingBottom: '4px'
+                    }}>
+                      Event Details
+                    </h3>
+                    <FilterDropdown onSelectionChange={setSelectedMainTypes} />
+                    <SubtypeDropdown 
+                      selectedMainTypes={selectedMainTypes} 
+                      onSelectionChange={setSelectedSubtypes}
+                    />
+                    
+                    {/* Separator line */}
+                    <div style={{
+                      height: '1px',
+                      backgroundColor: '#ddd',
+                      margin: '8px 0'
+                    }}></div>
+                    
+                    <TemporalTrendDropdown onSelectionChange={setSelectedTemporalTrend} />
+                  </div>
+
+                  {/* Separator line 2 */}
+                  <div style={{
+                    width: '1px',
+                    height: '100%',
+                    backgroundColor: '#ddd'
+                  }}></div>
+
+                  {/* Column 3: Place Details - 284px */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    paddingLeft: '8px',
+                    paddingRight: '8px'
+                  }}>
+                    <h3 style={{
+                      margin: '0',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      color: '#333',
+                      borderBottom: '2px solid #333',
+                      paddingBottom: '4px'
+                    }}>
+                      Place Details
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <DistrictDropdown onSelectionChange={setSelectedDistrict} />
+                    </div>
+                    
+                    <h4 style={{
+                      margin: '16px 0 4px 0',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      color: '#555'
+                    }}>
+                      Severity Levels
+                    </h4>
+                    <SeverityRadio 
+                      selectedMainTypes={selectedMainTypes} 
+                      selectedSubtypes={selectedSubtypes} 
+                      onSelectionChange={setSelectedSeverities}
+                    />
+                  </div>
+
+                  {/* Separator line 3 */}
+                  <div style={{
+                    width: '1px',
+                    height: '100%',
+                    backgroundColor: '#ddd'
+                  }}></div>
+
+                  {/* Column 4: Location - 284px */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    paddingLeft: '8px',
+                    paddingRight: '8px'
+                  }}>
+                    <h3 style={{
+                      margin: '0',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      color: '#333',
+                      borderBottom: '2px solid #333',
+                      paddingBottom: '4px'
+                    }}>
+                      Location
+                    </h3>
+                    {/* Empty as requested */}
+                  </div>
+
+                  {/* Separator line 4 */}
+                  <div style={{
+                    width: '1px',
+                    height: '100%',
+                    backgroundColor: '#ddd'
+                  }}></div>
+
+                  {/* Column 5: Analysis buttons - remaining width */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    paddingLeft: '8px'
+                  }}>
+                    <h3 style={{
+                      margin: '0',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      color: '#333',
+                      borderBottom: '2px solid #333',
+                      paddingBottom: '4px'
+                    }}>
+                      Analysis
+                    </h3>
+                    {/* Analysis buttons in column layout */}
+                    <div style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column',
+                      gap: '4px'
+                    }}>
+                      <HotspotButton />
+                      <KDEButton />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action buttons row at bottom */}
+                <div style={{
+                  marginTop: '12px',
+                  paddingTop: '8px',
+                  borderTop: '1px solid #ddd',
                   display: 'flex',
                   flexDirection: 'row',
                   gap: '8px',
-                  marginBottom: '8px',
-                  alignItems: 'flex-start'
+                  alignItems: 'center'
                 }}>
-                  {/* Analysis buttons column */}
-                  <div style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    gap: '4px',
-                    minWidth: '120px'
-                  }}>
-                    <HotspotButton />
-                    <KDEButton />
-                  </div>
-                  
-                  {/* Updated DateRangeSelector with callback */}
-                  <div style={{ minWidth: '200px' }}>
-                    <DateRangeSelector onDateRangeChange={setSelectedDateRange} />
-                  </div>
-                  
-                  {/* Updated ApplyFiltersButton with date range and types */}
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'flex-end',
-                    height: '100%',
-                    minWidth: '180px'
-                  }}>
+                  {/* Apply filters button */}
+                  <div style={{ marginLeft: 'auto' }}>
                     <ApplyFiltersButton
                       selectedSeverities={selectedSeverities}
                       selectedPartOfDay={selectedPartOfDay}
@@ -140,55 +308,6 @@ const App = () => {
                       selectedSubtypes={selectedSubtypes}
                     />
                   </div>
-                </div>
-
-                {/* Second row - Filter controls */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: '8px',
-                  alignItems: 'flex-start'
-                }}>
-                  {/* Main type and subtype filters */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <FilterDropdown onSelectionChange={setSelectedMainTypes} />
-                    <SubtypeDropdown 
-                      selectedMainTypes={selectedMainTypes} 
-                      onSelectionChange={setSelectedSubtypes}
-                    />
-                  </div>
-                  
-                  {/* Severity filter */}
-                  <SeverityRadio 
-                    selectedMainTypes={selectedMainTypes} 
-                    selectedSubtypes={selectedSubtypes} 
-                    onSelectionChange={setSelectedSeverities}
-                  />
-                  
-                  {/* Part of day filter */}
-                  <PartOfDayRadio 
-                    selectedMainTypes={selectedMainTypes} 
-                    selectedSubtypes={selectedSubtypes}
-                    selectedSeverities={selectedSeverities}
-                    onSelectionChange={setSelectedPartOfDay}
-                  />
-                  
-                  {/* District filter - standalone */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: 'black' }}>
-                      District Filter
-                    </div>
-                    <DistrictDropdown onSelectionChange={setSelectedDistrict} />
-                  </div>
-                  
-                  {/* Temporal Trend Type filter */}
-                  <TemporalTrendDropdown onSelectionChange={setSelectedTemporalTrend} />
-                  
-                  {/* City location filter (Inside/Outside) */}
-                  <InsideCityRadio
-                    selectedValue={selectedCityLocation}
-                    onSelectionChange={setSelectedCityLocation}
-                  />
                 </div>
               </div>
 
@@ -210,11 +329,21 @@ const App = () => {
                     flex: '1',
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
                     borderRadius: '5px',
+                    height: '536px',
                     boxShadow: '0 4px 20px black',
                     border: '1px solid black',
                     overflow: 'hidden'
                   }}>
-                    <ChartPanel />
+                    <ChartPanel 
+                      selectedDateRange={selectedDateRange}
+                      selectedTemporalTrend={selectedTemporalTrend}
+                      selectedMainTypes={selectedMainTypes}
+                      selectedSubtypes={selectedSubtypes}
+                      selectedSeverities={selectedSeverities}
+                      selectedPartOfDay={selectedPartOfDay}
+                      selectedDistrict={selectedDistrict}
+                      selectedCityLocation={selectedCityLocation}
+                    />
                   </div>
                 </div>
 
@@ -235,10 +364,7 @@ const App = () => {
                     border: '1px solid black'
                   }}>
                     <MapContainer />
-                    <CenterButton />
-                    <ToggleLayerButton />
-                    <ToggleCrimePointsButton />
-                    <ToggleDistrictButton />
+                    <MapPanel />
                   </div>
                   
                   {/* Status */}

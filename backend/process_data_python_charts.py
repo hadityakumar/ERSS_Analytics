@@ -12,7 +12,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # --- Configuration ---
 CONFIG = {
     "DATA_DIR": os.path.join(os.path.dirname(__file__), ""),
-    "INPUT_FILENAME": "csv_use_new.csv",
+    "PRIMARY_FILENAME": "filtered_data.csv",      # First choice
+    "FALLBACK_FILENAME": "ps_removed_dt.csv",    # Fallback if primary not found
     "DATE_COLUMN": "signal_lan",
     "MAIN_EVENT_TYPE_COL": "ahp_weighted_event_types_main_type",
     "SUB_EVENT_TYPE_COL": "ahp_weighted_event_types_sub_type",
@@ -22,9 +23,22 @@ CONFIG = {
 }
 
 # --- Data Loading and Preprocessing (optimized for a single call) ---
-# This part is still global-ish but executed per script invocation
 def load_and_preprocess_data():
-    filepath = os.path.join(CONFIG["DATA_DIR"], CONFIG["INPUT_FILENAME"])
+    # Try primary file first, then fallback
+    primary_filepath = os.path.join(CONFIG["DATA_DIR"], CONFIG["PRIMARY_FILENAME"])
+    fallback_filepath = os.path.join(CONFIG["DATA_DIR"], CONFIG["FALLBACK_FILENAME"])
+    
+    filepath = None
+    if os.path.exists(primary_filepath):
+        filepath = primary_filepath
+        logging.info(f"Using primary data file: {filepath}")
+    elif os.path.exists(fallback_filepath):
+        filepath = fallback_filepath
+        logging.info(f"Primary file not found, using fallback data file: {filepath}")
+    else:
+        logging.error(f"Neither primary file ({primary_filepath}) nor fallback file ({fallback_filepath}) found.")
+        return pd.DataFrame()
+    
     try:
         logging.info(f"Loading data from: {filepath}")
         df = pd.read_csv(filepath, low_memory=False)
@@ -56,7 +70,7 @@ def load_and_preprocess_data():
             if filtered_desired_order:
                 df[CONFIG["EVENT_LABEL_COL"]] = pd.Categorical(df[CONFIG["EVENT_LABEL_COL"]], categories=filtered_desired_order, ordered=True)
 
-        logging.info("Data loaded and preprocessed successfully.")
+        logging.info(f"Data loaded and preprocessed successfully from {os.path.basename(filepath)}. Shape: {df.shape}")
         return df
     except FileNotFoundError:
         logging.error(f"Error: Data file not found at {filepath}", exc_info=True)
