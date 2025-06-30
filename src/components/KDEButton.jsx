@@ -41,9 +41,9 @@ const KDEButton = () => {
   };
 
   const spinnerStyle = {
-    width: '16px',
-    height: '16px',
-    border: '2px solid #000000',
+    width: '12px',
+    height: '12px',
+    border: '2px solid #ffffff',
     borderTop: '2px solid transparent',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite'
@@ -63,44 +63,39 @@ const KDEButton = () => {
         onClick={handleKDEAnalysis}
         disabled={isAnalyzing}
         style={{
-          position: 'static',
-          padding: '12px 20px',
-          backgroundColor: isAnalyzing ? '#555555' : '#000000',
-          color: '#ffffff',
-          border: '1px solid #ffffff',
-          borderRadius: '8px',
+          width: '100%',
+          padding: '8px 4px',
+          backgroundColor: isAnalyzing ? '#555' : '#000',
+          color: '#fff',
+          border: '1px solid #333',
+          borderRadius: '4px',
           cursor: isAnalyzing ? 'not-allowed' : 'pointer',
-          fontSize: '14px',
+          fontSize: '10px',
           fontWeight: 'bold',
-          boxShadow: '0 4px 12px rgba(255,255,255,0.15)',
-          transition: 'all 0.3s ease',
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
-          width: '200px'
+          justifyContent: 'center',
+          gap: '4px'
         }}
         onMouseOver={(e) => {
           if (!isAnalyzing) {
-            e.target.style.backgroundColor = '#333333';
-            e.target.style.transform = 'translateY(-2px)';
+            e.target.style.backgroundColor = '#333';
           }
         }}
         onMouseOut={(e) => {
           if (!isAnalyzing) {
-            e.target.style.backgroundColor = '#000000';
-            e.target.style.transform = 'translateY(0)';
+            e.target.style.backgroundColor = '#000';
           }
         }}
+        title="Generate Kernel Density Estimation"
       >
         {isAnalyzing ? (
           <>
             <div style={spinnerStyle} />
-            Analyzing...
+            ...
           </>
         ) : (
-          <>
-            Generate KDE
-          </>
+          'KDE'
         )}
       </button>
     </>

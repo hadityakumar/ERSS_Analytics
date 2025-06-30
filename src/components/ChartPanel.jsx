@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
+import ReactLoading from "react-loading";
 
 const API_BASE_URL = 'http://localhost:5000/api/charts';
 
@@ -234,13 +235,13 @@ const ChartPanel = ({
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             <div style={{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', textAlign: 'center', border: '1px solid #ddd' }}>
               <h4 style={{ margin: '0 0 8px 0', color: '#495057' }}>Total Incidents</h4>
-              <p style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: '#007bff' }}>
+              <p style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: 'black' }}>
                 {kpiData.total_incidents || 0}
               </p>
             </div>
             <div style={{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', textAlign: 'center', border: '1px solid #ddd' }}>
               <h4 style={{ margin: '0 0 8px 0', color: '#495057' }}>Emergency Incidents</h4>
-              <p style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: '#dc3545' }}>
+              <p style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: 'black' }}>
                 {kpiData.emergency_incidents_count || 0}
               </p>
             </div>
@@ -248,13 +249,13 @@ const ChartPanel = ({
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             <div style={{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', textAlign: 'center', border: '1px solid #ddd' }}>
               <h4 style={{ margin: '0 0 8px 0', color: '#495057' }}>Most Common Event</h4>
-              <p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: '#28a745' }}>
+              <p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'black' }}>
                 {kpiData.most_common_main_event || 'N/A'}
               </p>
             </div>
             <div style={{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', textAlign: 'center', border: '1px solid #ddd' }}>
               <h4 style={{ margin: '0 0 8px 0', color: '#495057' }}>Avg Daily Incidents</h4>
-              <p style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: '#ffc107' }}>
+              <p style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: 'black' }}>
                 {kpiData.average_daily_incidents ? kpiData.average_daily_incidents.toFixed(1) : '0.0'}
               </p>
             </div>
@@ -366,23 +367,6 @@ const ChartPanel = ({
 
   const currentChart = charts[currentPage - 1];
 
-  if (loading) {
-    return (
-      <div style={{
-        width: '100%',
-        height: '536px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#666',
-        fontSize: '16px',
-        backgroundColor: '#fff'
-      }}>
-        Loading chart data...
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div style={{
@@ -436,8 +420,55 @@ const ChartPanel = ({
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        backgroundColor: '#fff'
+        backgroundColor: '#fff',
+        position: 'relative'
       }}>
+        {/* Loading overlay - only covers the main content area */}
+        {loading && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(255, 255, 255, 1)',
+            zIndex: 10,
+            borderRadius: '5px'
+          }}>
+            <ReactLoading
+              type={"bars"}
+              color={"black"}
+              height={60}
+              width={60}
+            />
+            <div style={{
+              marginTop: '20px',
+              textAlign: 'center'
+            }}>
+              <h3 style={{ 
+                color: 'black', 
+                marginBottom: '8px',
+                fontSize: '16px',
+                fontWeight: '500'
+              }}>
+                Loading Chart Data
+              </h3>
+              <p style={{ 
+                color: '#666',
+                fontSize: '12px',
+                fontWeight: '400',
+                margin: 0
+              }}>
+                Fetching analytics from server...
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div style={{ marginBottom: '12px', flexShrink: 0, backgroundColor: '#fff' }}>
           {/* Top border line */}
@@ -564,13 +595,13 @@ const ChartPanel = ({
       <div style={{
         position: 'absolute',
         right: 0,
-        top: '24px',
+        top: '15px',
         width: '60px',
         height: 'calc(100% - 20px)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'start',
+        justifyContent: 'space-between',
         backgroundColor: '#fff'
       }}>
         {/* Left border*/}
@@ -583,13 +614,14 @@ const ChartPanel = ({
           backgroundColor: 'black'
         }}></div>
         
-        {/* Pagination buttons */}
+        {/* Pagination buttons - Top */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           gap: '0px',
-          padding: '0px 8px'
+          padding: '0px 8px',
+          marginTop: '0px'
         }}>
           {Array.from({ length: totalPages }, (_, index) => (
             <React.Fragment key={index + 1}>
@@ -619,6 +651,63 @@ const ChartPanel = ({
               )}
             </React.Fragment>
           ))}
+        </div>
+
+        {/* Download button - Bottom */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          padding: '0px 8px',
+          marginBottom: '20px'
+        }}>
+          {/* Top line */}
+          <div style={{
+            width: '30px',
+            height: '1px',
+            backgroundColor: '#ddd',
+            marginBottom: '0px'
+          }}></div>
+          
+          <button
+            onClick={() => {
+              // Handle download functionality here
+              console.log('Download chart data for page:', currentPage);
+              // You can implement CSV download, image export, etc.
+            }}
+            style={{
+              width: '33px',
+              height: '34px',
+              border: 'none',
+              backgroundColor: 'transparent',
+              color: '#000',
+              fontSize: '10px',
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '2px'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = '#f0f0f0';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = 'transparent';
+            }}
+            title="Download chart data"
+          >
+           <img src="download_button.svg" alt="" />
+            
+          </button>
+          
+          {/* Bottom line */}
+          <div style={{
+            width: '30px',
+            height: '1px',
+            backgroundColor: '#ddd',
+            marginTop: '0px'
+          }}></div>
         </div>
       </div>
     </div>

@@ -25,14 +25,30 @@ const MapPanel = () => {
       <div style={{ position: 'relative' }}>
         <CenterButton />
       </div>
-      <div style={{ position: 'relative' }}>
-        <ToggleLayerButton />
-      </div>
+
       <div style={{ position: 'relative' }}>
         <ToggleCrimePointsButton />
       </div>
+
+      <div style={{ position: 'relative' }}>
+        <ToggleLayerButton />
+      </div>
+      
       <div style={{ position: 'relative' }}>
         <ToggleDistrictButton />
+      </div>
+      <div>
+        <img src="snapshot.svg" alt="" />
+      </div>
+      <div>
+        <img src="locate.svg" alt="" />
+      </div>
+      
+        <div>
+        <img src="left_arrows.svg" alt="" />
+      </div>
+      <div>
+        <img src="map_locate.svg" alt="" />
       </div>
     </div>
   );

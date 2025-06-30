@@ -87,7 +87,7 @@ const App = () => {
               flexDirection: 'column',
               gap: '10px'
             }}>
-              {/* Top panel with controls - Fixed column widths and separators */}
+              {/* Top panel with controls*/}
               <div style={{
                 height: '237px',
                 backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -99,7 +99,7 @@ const App = () => {
               }}>
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: '239px 1px 321px 1px 284px 1px 284px 1fr',
+                  gridTemplateColumns: '239px 1px 321px 1px 284px 1px 284px 1px 1fr',
                   gap: '0',
                   height: '100%',
                   alignItems: 'start'
@@ -208,14 +208,11 @@ const App = () => {
                       <DistrictDropdown onSelectionChange={setSelectedDistrict} />
                     </div>
                     
-                    <h4 style={{
-                      margin: '16px 0 4px 0',
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      color: '#555'
-                    }}>
-                      Severity Levels
-                    </h4>
+                   <div style={{
+                      height: '1px',
+                      backgroundColor: '#ddd',
+                      margin: '8px 0'
+                    }}></div>
                     <SeverityRadio 
                       selectedMainTypes={selectedMainTypes} 
                       selectedSubtypes={selectedSubtypes} 
@@ -248,7 +245,145 @@ const App = () => {
                     }}>
                       Location
                     </h3>
-                    {/* Empty as requested */}
+                    
+                    {/* Landmark search */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <label style={{
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        color: '#333',
+                        minWidth: '60px'
+                      }}>
+                        Landmark:
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Search landmark..."
+                        style={{
+                          flex: '1',
+                          padding: '4px 8px',
+                          fontSize: '11px',
+                          backgroundColor: '#fff',
+                          border: '1px solid #000',
+                          borderRadius: '3px',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Separator line */}
+                    <div style={{
+                      height: '1px',
+                      backgroundColor: '#ddd',
+                      margin: '4px 0'
+                    }}></div>
+                    
+                    {/* Latitude input */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <label style={{
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        color: '#333',
+                        minWidth: '60px'
+                      }}>
+                        Latitude:
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        placeholder="40.7128"
+                        style={{
+                          flex: '1',
+                          padding: '4px 8px',
+                          fontSize: '11px',
+                          backgroundColor: '#fff',
+                          border: '1px solid #000',
+                          borderRadius: '3px',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Longitude input */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <label style={{
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        color: '#333',
+                        minWidth: '60px'
+                      }}>
+                        Longitude:
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        placeholder="-74.0060"
+                        style={{
+                          flex: '1',
+                          padding: '4px 8px',
+                          fontSize: '11px',
+                          backgroundColor: '#fff',
+                          border: '1px solid #000',
+                          borderRadius: '3px',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Separator line */}
+                    <div style={{
+                      height: '1px',
+                      backgroundColor: '#ddd',
+                      margin: '4px 0'
+                    }}></div>
+                    
+                    {/* Range input */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <label style={{
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        color: '#333',
+                        minWidth: '60px'
+                      }}>
+                        Range:
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        placeholder="1.0"
+                        style={{
+                          flex: '1',
+                          padding: '4px 8px',
+                          fontSize: '11px',
+                          backgroundColor: '#fff',
+                          border: '1px solid #000',
+                          borderRadius: '3px',
+                          outline: 'none'
+                        }}
+                      />
+                      <span style={{
+                        fontSize: '10px',
+                        color: '#666'
+                      }}>
+                        km
+                      </span>
+                    </div>
                   </div>
 
                   {/* Separator line 4 */}
@@ -258,12 +393,15 @@ const App = () => {
                     backgroundColor: '#ddd'
                   }}></div>
 
-                  {/* Column 5: Analysis buttons - remaining width */}
+                  {/* Column 5: Actions - Remaining space (1fr) */}
                   <div style={{
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '8px',
-                    paddingLeft: '8px'
+                    paddingLeft: '8px',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: '100%'
                   }}>
                     <h3 style={{
                       margin: '0',
@@ -271,42 +409,31 @@ const App = () => {
                       fontWeight: 'bold',
                       color: '#333',
                       borderBottom: '2px solid #333',
-                      paddingBottom: '4px'
+                      paddingBottom: '4px',
+                      textAlign: 'center',
+                      width: '100%'
                     }}>
-                      Analysis
+                      Actions
                     </h3>
-                    {/* Analysis buttons in column layout */}
-                    <div style={{ 
-                      display: 'flex', 
+                    
+                    {/* Apply filters button - centered in column */}
+                    <div style={{
+                      display: 'flex',
                       flexDirection: 'column',
-                      gap: '4px'
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      flex: '1',
+                      width: '100%'
                     }}>
-                      <HotspotButton />
-                      <KDEButton />
+                      <ApplyFiltersButton
+                        selectedSeverities={selectedSeverities}
+                        selectedPartOfDay={selectedPartOfDay}
+                        selectedCityLocation={selectedCityLocation}
+                        selectedDateRange={selectedDateRange}
+                        selectedMainTypes={selectedMainTypes}
+                        selectedSubtypes={selectedSubtypes}
+                      />
                     </div>
-                  </div>
-                </div>
-
-                {/* Action buttons row at bottom */}
-                <div style={{
-                  marginTop: '12px',
-                  paddingTop: '8px',
-                  borderTop: '1px solid #ddd',
-                  display: 'flex',
-                  flexDirection: 'row',
-                  gap: '8px',
-                  alignItems: 'center'
-                }}>
-                  {/* Apply filters button */}
-                  <div style={{ marginLeft: 'auto' }}>
-                    <ApplyFiltersButton
-                      selectedSeverities={selectedSeverities}
-                      selectedPartOfDay={selectedPartOfDay}
-                      selectedCityLocation={selectedCityLocation}
-                      selectedDateRange={selectedDateRange}
-                      selectedMainTypes={selectedMainTypes}
-                      selectedSubtypes={selectedSubtypes}
-                    />
                   </div>
                 </div>
               </div>
@@ -402,56 +529,17 @@ const App = () => {
               border: '1px solid black',
               gap: '10px'
             }}>
-              <div style={{
-                writingMode: 'vertical-lr',
-                textOrientation: 'mixed',
-                fontWeight: 'bold',
-                marginBottom: '10px'
-              }}>
-                Tools
-              </div>
+             
               
-              {/* Add your tool buttons here */}
+              {/* Analysis tools */}
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '8px',
                 width: '100%'
               }}>
-                {/* Example tool buttons */}
-                <button style={{
-                  width: '100%',
-                  padding: '8px 4px',
-                  fontSize: '10px',
-                  backgroundColor: '#f0f0f0',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}>
-                  Tool 1
-                </button>
-                <button style={{
-                  width: '100%',
-                  padding: '8px 4px',
-                  fontSize: '10px',
-                  backgroundColor: '#f0f0f0',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}>
-                  Tool 2
-                </button>
-                <button style={{
-                  width: '100%',
-                  padding: '8px 4px',
-                  fontSize: '10px',
-                  backgroundColor: '#f0f0f0',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}>
-                  Tool 3
-                </button>
+                <HotspotButton />
+                <KDEButton />
               </div>
             </div>
           </div>

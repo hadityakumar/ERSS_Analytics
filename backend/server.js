@@ -4,6 +4,7 @@ import { processCSVRoute } from './routes/csvRoutes.js';
 import { debugRoutes } from './routes/debugRoutes.js';
 import { chartRoutes } from './routes/chartRoutes.js';
 import { config } from './config/config.js';
+import { hotspotRoutes } from './routes/hotspotRoutes.js';
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(express.static('.'));
 app.use('/api', processCSVRoute);
 app.use('/api', debugRoutes);
 app.use('/api/charts', chartRoutes);
+app.use('/api/hotspot', hotspotRoutes);
 
 // Start server
 app.listen(config.PORT, () => {

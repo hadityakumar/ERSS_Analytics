@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { processingStarted, processingComplete, processingError, setDateFilter } from '../store';
-import './ApplyFiltersButton.css';
 
 const ApplyFiltersButton = ({ 
   selectedSeverities, 
@@ -184,50 +183,46 @@ const ApplyFiltersButton = ({
   };
 
   return (
-    <div style={{ marginBottom: '8px' }}>
+    <div>
       <button
         onClick={handleApplyFilters}
         disabled={isApplying}
         style={{
           width: '100%',
-          padding: '12px 16px',
+          padding: '8px 12px',
           backgroundColor: hasActiveFilters() 
-            ? (isApplying ? 'rgba(30, 187, 214, 0.7)' : 'rgba(30, 187, 214, 0.95)')
-            : 'rgba(128, 128, 128, 0.7)',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          fontSize: '14px',
-          fontWeight: '600',
+            ? (isApplying ? '#666' : '#000')
+            : '#ccc',
+          color: hasActiveFilters() ? '#fff' : '#666',
+          border: '1px solid #000',
+          borderRadius: '3px',
+          fontSize: '12px',
+          fontWeight: 'bold',
           cursor: isApplying ? 'not-allowed' : (hasActiveFilters() ? 'pointer' : 'default'),
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
           transition: 'all 0.2s ease',
-          minWidth: '220px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '8px'
+          gap: '6px',
+          minHeight: '32px'
         }}
       >
         {isApplying && (
-          <div
-            className="spinner"
-            style={{
-              width: '16px',
-              height: '16px',
-              border: '2px solid transparent',
-              borderTop: '2px solid white',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite'
-            }}
-          />
+          <div style={{
+            width: '12px',
+            height: '12px',
+            border: '2px solid transparent',
+            borderTop: '2px solid #fff',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }} />
         )}
         {getButtonText()}
       </button>
       
       {hasActiveFilters() && (
         <div style={{
-          fontSize: '11px',
+          fontSize: '10px',
           color: '#666',
           marginTop: '4px',
           textAlign: 'center'
@@ -235,6 +230,15 @@ const ApplyFiltersButton = ({
           {getStatusText()}
         </div>
       )}
+
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
     </div>
   );
 };

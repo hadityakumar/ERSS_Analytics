@@ -48,20 +48,7 @@ const ToggleCrimePointsButton = () => {
       }}
       title={isLayerVisible ? "Hide Crime Points" : "Show Crime Points"}
     >
-      <svg 
-        width="20" 
-        height="20" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke={isLayerVisible ? "#ffffff" : "#333333"}
-        strokeWidth="2"
-        strokeLinecap="round" 
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <circle cx="12" cy="12" r="3" />
-        <path d="M12 1v6M12 17v6M23 12h-6M7 12H1" />
-      </svg>
+      <img src="points_button.svg" alt="" />
     </button>
   );
 };

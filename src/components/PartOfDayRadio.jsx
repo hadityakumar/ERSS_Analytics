@@ -108,21 +108,17 @@ const PartOfDayRadio = ({ selectedMainTypes, selectedSubtypes, selectedSeveritie
 
   if (!datasetInfo) {
     return (
-      <div style={{ marginBottom: '8px' }}>
-        <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: 'black' }}>
-          Part of Day
-        </div>
-        <div style={{ 
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          border: '1px solid #ddd',
-          borderRadius: '8px',
-          padding: '12px 16px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          minWidth: '220px',
-          opacity: 0.6
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+        <h4 style={{
+          margin: '0',
+          fontSize: '12px',
+          fontWeight: 'bold',
+          color: '#333',
+          minWidth: '80px'
         }}>
-          Initializing...
-        </div>
+          Part of Day:
+        </h4>
+        <div style={{ fontSize: '11px', color: '#666' }}>Loading...</div>
       </div>
     );
   }
@@ -132,63 +128,81 @@ const PartOfDayRadio = ({ selectedMainTypes, selectedSubtypes, selectedSeveritie
   );
 
   return (
-    <div style={{ marginBottom: '8px' }}>
-      <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: 'black' }}>
-        Part of Day
-      </div>
-      <div style={{ 
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        border: '1px solid #ddd',
-        borderRadius: '8px',
-        padding: '12px 16px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        minWidth: '220px'
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+      <h4 style={{
+        margin: '0',
+        fontSize: '12px',
+        fontWeight: 'bold',
+        color: '#333',
+        minWidth: '80px'
       }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label style={{ 
+        Part of Day:
+      </h4>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        {/* All Times option */}
+        <label 
+          style={{ 
             display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between',
+            alignItems: 'center',
             cursor: 'pointer',
-            fontSize: '14px',
-            color: 'black',
-            fontWeight: selectedPartOfDay.includes('All Times') ? 'bold' : 'normal'
+            fontSize: '11px',
+            color: '#333'
+          }}
+          onClick={() => handlePartOfDayChange('All Times')}
+        >
+          <div style={{
+            width: '14px',
+            height: '14px',
+            border: '1px solid #000',
+            borderRadius: '2px',
+            marginRight: '6px',
+            backgroundColor: selectedPartOfDay.includes('All Times') ? '#28a745' : '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <input
-                type="checkbox"
-                checked={selectedPartOfDay.includes('All Times')}
-                onChange={() => handlePartOfDayChange('All Times')}
-                style={{ marginRight: '8px' }}
-              />
-              All Times
-            </div>
-            <span style={{ fontSize: '12px', color: '#666' }}>({totalCount})</span>
-          </label>
-          
-          {PART_OF_DAY_CATEGORIES.map((partOfDay) => (
-            <label key={partOfDay} style={{ 
+            {selectedPartOfDay.includes('All Times') && (
+              <span style={{ color: '#fff', fontSize: '10px', lineHeight: 1 }}>✓</span>
+            )}
+          </div>
+          <span>
+            All Times ({totalCount})
+          </span>
+        </label>
+        
+        {/* Individual time periods */}
+        {PART_OF_DAY_CATEGORIES.map((partOfDay) => (
+          <label 
+            key={partOfDay} 
+            style={{ 
               display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between',
+              alignItems: 'center',
               cursor: 'pointer',
-              fontSize: '14px',
-              color: 'black',
-              fontWeight: selectedPartOfDay.includes(partOfDay) ? 'bold' : 'normal'
+              fontSize: '11px',
+              color: '#333'
+            }}
+            onClick={() => handlePartOfDayChange(partOfDay)}
+          >
+            <div style={{
+              width: '14px',
+              height: '14px',
+              border: '1px solid #000',
+              borderRadius: '2px',
+              marginRight: '6px',
+              backgroundColor: selectedPartOfDay.includes(partOfDay) ? '#28a745' : '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <input
-                  type="checkbox"
-                  checked={selectedPartOfDay.includes(partOfDay)}
-                  onChange={() => handlePartOfDayChange(partOfDay)}
-                  style={{ marginRight: '8px' }}
-                />
-                {partOfDay}
-              </div>
-              <span style={{ fontSize: '12px', color: '#666' }}>({partOfDayCounts[partOfDay] || 0})</span>
-            </label>
-          ))}
-        </div>
+              {selectedPartOfDay.includes(partOfDay) && (
+                <span style={{ color: '#fff', fontSize: '10px', lineHeight: 1 }}>✓</span>
+              )}
+            </div>
+            <span>
+              {partOfDay} ({partOfDayCounts[partOfDay] || 0})
+            </span>
+          </label>
+        ))}
       </div>
     </div>
   );

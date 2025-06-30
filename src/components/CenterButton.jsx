@@ -92,14 +92,9 @@ const CenterButton = () => {
       title="Center map on Trivandrum"
     >
       <img 
-        src="/center-circle-svgrepo-com.svg" 
+        src="/center_button.svg" 
         alt="Center" 
-        style={{
-          width: '20px',
-          height: '20px',
-          filter: 'invert(0.2)',
-          pointerEvents: 'none'
-        }}
+        
       />
     </button>
   );

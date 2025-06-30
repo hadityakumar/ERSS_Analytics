@@ -144,6 +144,12 @@ const SubtypeDropdown = ({ selectedMainTypes, onSelectionChange }) => {
     onSelectionChange?.(newSelectedSubtypes);
   }, [selectedSubtypes, reapplyMainTypeFilter, createSubtypeFilter, onSelectionChange]);
 
+  const handleClearSelection = useCallback(() => {
+    setSelectedSubtypes(['All Subtypes']);
+    reapplyMainTypeFilter();
+    onSelectionChange?.(['All Subtypes']);
+  }, [reapplyMainTypeFilter, onSelectionChange]);
+
   const getDisplayText = () => {
     if (selectedSubtypes.includes('All Subtypes')) return 'All Subtypes';
     if (selectedSubtypes.length === 1) return selectedSubtypes[0];
@@ -153,8 +159,18 @@ const SubtypeDropdown = ({ selectedMainTypes, onSelectionChange }) => {
 
   if (!datasetInfo) {
     return (
-      <div style={{ minWidth: '220px', display: 'flex' }}>
-        <div style={{ flex: 1, padding: '12px 16px', opacity: 0.6 }}>Initializing...</div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', width: '100%' }}>
+        <h4 style={{
+          margin: '0',
+          fontSize: '12px',
+          fontWeight: 'bold',
+          color: '#333',
+          width: '80px',
+          flexShrink: 0
+        }}>
+          Subtypes:
+        </h4>
+        <div style={{ fontSize: '11px', color: '#666', flex: '1' }}>Loading...</div>
       </div>
     );
   }
@@ -164,51 +180,83 @@ const SubtypeDropdown = ({ selectedMainTypes, onSelectionChange }) => {
   );
 
   return (
-    <div style={{ position: 'static', minWidth: '220px', display: 'flex' }}>
-      <div style={{ position: 'relative', display: 'flex', width: '100%' }}>
-        <div style={{
-          flex: '1',
-          padding: '12px 16px',
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          color: 'black',
-          border: '1px solid #ddd',
-          borderRight: 'none',
-          borderRadius: '8px 0 0 8px',
-          fontSize: '14px',
-          fontWeight: '500',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          display: 'flex',
-          alignItems: 'center',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          maxWidth: '150px'
-        }}>
-          {getDisplayText()}
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', width: '100%' }}>
+      <h4 style={{
+        margin: '0',
+        fontSize: '12px',
+        fontWeight: 'bold',
+        color: '#333',
+        width: '80px',
+        flexShrink: 0
+      }}>
+        Subtypes:
+      </h4>
+      
+      <div style={{ position: 'relative', flex: '1', width: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          {/* Main dropdown container - Fixed width */}
+          <div style={{
+            width: 'calc(100% - 28px)', // Fixed width minus clear button and gap
+            display: 'flex',
+            backgroundColor: '#fff',
+            border: '1px solid #000',
+            borderRadius: '3px'
+          }}>
+            {/* Display text area */}
+            <div style={{
+              flex: '1',
+              padding: '6px 8px',
+              fontSize: '12px',
+              color: '#333',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              minWidth: 0
+            }}>
+              {getDisplayText()}
+            </div>
+            
+            {/* Dropdown button */}
+            <button onClick={() => setIsOpen(!isOpen)} style={{
+              padding: '6px 8px',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '12px',
+              color: '#333',
+              flexShrink: 0
+            }}>
+              <span style={{ 
+                transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.2s ease',
+                display: 'inline-block'
+              }}>▼</span>
+            </button>
+          </div>
+
+          {/* Clear button (X) - Fixed position */}
+          <button 
+            onClick={handleClearSelection}
+            style={{
+              marginLeft: '4px',
+              width: '24px',
+              height: '24px',
+              backgroundColor: '#000',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '3px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}
+            title="Clear selection"
+          >
+            ×
+          </button>
         </div>
-        
-        <button onClick={() => setIsOpen(!isOpen)} style={{
-          padding: '12px',
-          backgroundColor: isOpen ? 'rgba(30, 187, 214, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-          color: isOpen ? 'white' : 'black',
-          border: '1px solid #ddd',
-          borderLeft: 'none',
-          borderRadius: '0 8px 8px 0',
-          cursor: 'pointer',
-          fontSize: '14px',
-          fontWeight: '500',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'all 0.2s ease',
-          minWidth: '40px'
-        }}>
-          <span style={{ 
-            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-            transition: 'transform 0.2s ease'
-          }}>▼</span>
-        </button>
 
         {isOpen && (
           <div style={{
@@ -216,53 +264,50 @@ const SubtypeDropdown = ({ selectedMainTypes, onSelectionChange }) => {
             top: '100%',
             left: 0,
             right: 0,
-            backgroundColor: 'white',
-            border: '1px solid #ddd',
-            borderRadius: '8px',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-            maxHeight: '300px',
+            backgroundColor: '#fff',
+            border: '1px solid #000',
+            borderRadius: '3px',
+            maxHeight: '200px',
             overflowY: 'auto',
             zIndex: 999,
-            marginTop: '4px'
+            marginTop: '2px'
           }}>
             <div
               style={{
-                padding: '12px 16px',
+                padding: '6px 8px',
                 cursor: 'pointer',
-                fontSize: '14px',
-                borderBottom: '1px solid #f0f0f0',
+                fontSize: '12px',
+                borderBottom: '1px solid #ddd',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                fontWeight: selectedSubtypes.includes('All Subtypes') ? 'bold' : 'normal',
-                backgroundColor: selectedSubtypes.includes('All Subtypes') ? '#f8f9fa' : 'transparent'
+                backgroundColor: selectedSubtypes.includes('All Subtypes') ? '#f0f0f0' : 'transparent'
               }}
               onClick={() => handleSubtypeSelect('All Subtypes')}
             >
               <span>All Subtypes ({totalAvailableCount})</span>
               {selectedSubtypes.includes('All Subtypes') && (
-                <span style={{ color: '#1EBBD6', fontWeight: 'bold' }}>✓</span>
+                <span style={{ color: '#28a745', fontWeight: 'bold' }}>✓</span>
               )}
             </div>
             {availableSubtypes.map((subtype, index) => (
               <div
                 key={`${subtype}-${index}`}
                 style={{
-                  padding: '12px 16px',
+                  padding: '6px 8px',
                   cursor: 'pointer',
-                  fontSize: '14px',
-                  borderBottom: index === availableSubtypes.length - 1 ? 'none' : '1px solid #f0f0f0',
+                  fontSize: '12px',
+                  borderBottom: index === availableSubtypes.length - 1 ? 'none' : '1px solid #ddd',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  fontWeight: selectedSubtypes.includes(subtype) ? 'bold' : 'normal',
-                  backgroundColor: selectedSubtypes.includes(subtype) ? '#e3f2fd' : 'transparent'
+                  backgroundColor: selectedSubtypes.includes(subtype) ? '#f0f0f0' : 'transparent'
                 }}
                 onClick={() => handleSubtypeSelect(subtype)}
               >
                 <span>{subtype} ({subtypeCounts[subtype] || 0})</span>
                 {selectedSubtypes.includes(subtype) && (
-                  <span style={{ color: '#1EBBD6', fontWeight: 'bold' }}>✓</span>
+                  <span style={{ color: '#28a745', fontWeight: 'bold' }}>✓</span>
                 )}
               </div>
             ))}

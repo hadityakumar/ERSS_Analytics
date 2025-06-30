@@ -99,18 +99,17 @@ const SeverityRadio = ({ selectedMainTypes, selectedSubtypes, onSelectionChange 
 
   if (!datasetInfo) {
     return (
-      <div style={{ marginBottom: '8px' }}>
-        <div style={{ 
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          border: '1px solid #ddd',
-          borderRadius: '8px',
-          padding: '12px 16px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          minWidth: '220px',
-          opacity: 0.6
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+        <h4 style={{
+          margin: '0',
+          fontSize: '12px',
+          fontWeight: 'bold',
+          color: '#333',
+          minWidth: '80px'
         }}>
-          Initializing...
-        </div>
+          Severity Levels:
+        </h4>
+        <div style={{ fontSize: '11px', color: '#666' }}>Loading...</div>
       </div>
     );
   }
@@ -120,60 +119,81 @@ const SeverityRadio = ({ selectedMainTypes, selectedSubtypes, onSelectionChange 
   );
 
   return (
-    <div style={{ marginBottom: '8px' }}>
-      <div style={{ 
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        border: '1px solid #ddd',
-        borderRadius: '8px',
-        padding: '12px 16px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        minWidth: '220px'
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+      <h4 style={{
+        margin: '0',
+        fontSize: '12px',
+        fontWeight: 'bold',
+        color: '#333',
+        minWidth: '80px'
       }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label style={{ 
+        Severity Levels:
+      </h4>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        {/* All Levels option */}
+        <label 
+          style={{ 
             display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between',
+            alignItems: 'center',
             cursor: 'pointer',
-            fontSize: '14px',
-            color: 'black',
-            fontWeight: selectedSeverities.includes('All Levels') ? 'bold' : 'normal'
+            fontSize: '11px',
+            color: '#333'
+          }}
+          onClick={() => handleSeverityChange('All Levels')}
+        >
+          <div style={{
+            width: '14px',
+            height: '14px',
+            border: '1px solid #000',
+            borderRadius: '2px',
+            marginRight: '6px',
+            backgroundColor: selectedSeverities.includes('All Levels') ? '#28a745' : '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <input
-                type="checkbox"
-                checked={selectedSeverities.includes('All Levels')}
-                onChange={() => handleSeverityChange('All Levels')}
-                style={{ marginRight: '8px' }}
-              />
-              All Levels
-            </div>
-            <span style={{ fontSize: '12px', color: '#666' }}>({totalCount})</span>
-          </label>
-          
-          {SEVERITY_LEVELS.map((severity) => (
-            <label key={severity} style={{ 
+            {selectedSeverities.includes('All Levels') && (
+              <span style={{ color: '#fff', fontSize: '10px', lineHeight: 1 }}>✓</span>
+            )}
+          </div>
+          <span>
+            All Levels ({totalCount})
+          </span>
+        </label>
+        
+        {/* Individual severity levels */}
+        {SEVERITY_LEVELS.map((severity) => (
+          <label 
+            key={severity} 
+            style={{ 
               display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between',
+              alignItems: 'center',
               cursor: 'pointer',
-              fontSize: '14px',
-              color: 'black',
-              fontWeight: selectedSeverities.includes(severity) ? 'bold' : 'normal'
+              fontSize: '11px',
+              color: '#333'
+            }}
+            onClick={() => handleSeverityChange(severity)}
+          >
+            <div style={{
+              width: '14px',
+              height: '14px',
+              border: '1px solid #000',
+              borderRadius: '2px',
+              marginRight: '6px',
+              backgroundColor: selectedSeverities.includes(severity) ? '#28a745' : '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <input
-                  type="checkbox"
-                  checked={selectedSeverities.includes(severity)}
-                  onChange={() => handleSeverityChange(severity)}
-                  style={{ marginRight: '8px' }}
-                />
-                {severity}
-              </div>
-              <span style={{ fontSize: '12px', color: '#666' }}>({severityCounts[severity] || 0})</span>
-            </label>
-          ))}
-        </div>
+              {selectedSeverities.includes(severity) && (
+                <span style={{ color: '#fff', fontSize: '10px', lineHeight: 1 }}>✓</span>
+              )}
+            </div>
+            <span>
+              {severity} ({severityCounts[severity] || 0})
+            </span>
+          </label>
+        ))}
       </div>
     </div>
   );
