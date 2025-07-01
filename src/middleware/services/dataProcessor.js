@@ -64,7 +64,8 @@ export const loadDataToKepler = (store, parsedData, label) => {
         datasets: [{ info: { id: datasetId, label }, data: parsedData }],
         options: { 
           centerMap: false,
-          keepExistingConfig: false 
+          keepExistingConfig: true,
+          readOnly: true,   //keep this false if u want the panel ****
         },
         config: config.config
       })

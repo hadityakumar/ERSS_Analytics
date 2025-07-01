@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 
 router.post('/analysis', async (req, res) => {
   try {
-    const { startDate, endDate, timeInterval = '1W', timeStep = 3, distance = 500 } = req.body;
+    const { startDate, endDate, timeInterval = '2W', timeStep = 4, distance = 500 } = req.body;
     
     console.log('Starting emerging hotspots analysis...');
     console.log('Parameters:', { startDate, endDate, timeInterval, timeStep, distance });
@@ -46,27 +46,44 @@ router.post('/analysis', async (req, res) => {
       fs.unlinkSync(outputPath);
     }
     
-    // Prepare Python command arguments
+    // Format dates to YYYY-MM-DD format
+    const formatDate = (dateString) => {
+      if (!dateString) return null;
+      try {
+        const date = new Date(dateString);
+        return date.toISOString().split('T')[0]; // Extract YYYY-MM-DD part
+      } catch (error) {
+        console.error('Date formatting error:', error);
+        return null;
+      }
+    };
+    
+    // Prepare Python command arguments - NO positional arguments
     const pythonArgs = [
       pythonScriptPath,
-      inputPath,
+      '--input_file', inputPath,
       '--time_interval', timeInterval,
       '--time_step', timeStep.toString(),
-      '--distance', distance.toString()
+      '--distance', distance.toString(),
+      '--cell_size', '500'
     ];
 
-    if (startDate) {
-      pythonArgs.push('--start_date', startDate);
+    const formattedStartDate = formatDate(startDate);
+    const formattedEndDate = formatDate(endDate);
+
+    if (formattedStartDate) {
+      pythonArgs.push('--start_date', formattedStartDate);
     }
-    if (endDate) {
-      pythonArgs.push('--end_date', endDate);
+    if (formattedEndDate) {
+      pythonArgs.push('--end_date', formattedEndDate);
     }
     
     console.log('Executing Python command:', 'python', pythonArgs);
     
     // Execute Python script
     const pythonProcess = spawn('python', pythonArgs, {
-      cwd: path.join(__dirname, '..')
+      cwd: path.join(__dirname, '..'),
+      stdio: ['pipe', 'pipe', 'pipe']
     });
     
     let stdout = '';
@@ -75,13 +92,13 @@ router.post('/analysis', async (req, res) => {
     pythonProcess.stdout.on('data', (data) => {
       const output = data.toString();
       stdout += output;
-      console.log('Python stdout:', output);
+      console.log('Python stdout:', output.trim());
     });
     
     pythonProcess.stderr.on('data', (data) => {
       const error = data.toString();
       stderr += error;
-      console.error('Python stderr:', error);
+      console.error('Python stderr:', error.trim());
     });
     
     pythonProcess.on('close', (code) => {
@@ -97,8 +114,13 @@ router.post('/analysis', async (req, res) => {
             // Calculate statistics
             const features = parsedData.features || [];
             const timePeriods = [...new Set(features.map(f => f.properties.time_bin))].length;
-            const totalHotspots = features.filter(f => f.properties.gi_score > 1.96).length;
-            const emergingPatterns = features.filter(f => f.properties.gi_score > 2.58).length;
+            const totalHotspots = features.filter(f => 
+              f.properties.hotspot_type && 
+              f.properties.hotspot_type.includes('Hot Spot')
+            ).length;
+            const emergingPatterns = features.filter(f => 
+              f.properties.emerging_type === 'Intensifying'
+            ).length;
             
             res.json({
               success: true,
@@ -109,11 +131,12 @@ router.post('/analysis', async (req, res) => {
                 emergingPatterns: emergingPatterns,
                 totalFeatures: features.length,
                 outputFile: 'emerging_hotspots.geojson',
-                dateRange: startDate && endDate ? `${startDate} to ${endDate}` : 'All dates',
+                dateRange: formattedStartDate && formattedEndDate ? `${formattedStartDate} to ${formattedEndDate}` : 'All dates',
                 parameters: {
                   timeInterval,
                   timeStep,
-                  distance
+                  distance,
+                  cellSize: 500
                 },
                 executionSummary: stdout.trim()
               },
@@ -177,7 +200,7 @@ router.post('/analysis', async (req, res) => {
           details: 'Analysis took longer than 10 minutes'
         });
       }
-    }, 600000); // 10 minutes timeout (longer than hotspot analysis)
+    }, 600000); // 10 minutes timeout
     
   } catch (error) {
     console.error('Error in emerging hotspots analysis endpoint:', error);
