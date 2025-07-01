@@ -23,7 +23,7 @@ const ChartPanel = ({
   selectedCityLocation
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 5;
+  const totalPages = 4;
 
   // Chart data states
   const [kpiData, setKpiData] = useState({
@@ -339,25 +339,6 @@ const ChartPanel = ({
         color: CHART_COLORS[index % CHART_COLORS.length], 
         label: `${item.Severity} (${item.Count})` 
       }))
-    },
-    {
-      id: 5,
-      title: "Top Incident Types Ranking",
-      description: "Ranking of the most frequently reported incident types based on current filters, providing insights for targeted prevention strategies.",
-      component: (
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={topMainEventTypesData} layout="horizontal">
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" />
-            <YAxis dataKey="MainEventType" type="category" width={120} />
-            <Tooltip />
-            <Bar dataKey="Count" fill="#ff7300" />
-          </BarChart>
-        </ResponsiveContainer>
-      ),
-      legend: [
-        { color: '#ff7300', label: 'Event Count' }
-      ]
     }
   ];
 
@@ -659,7 +640,7 @@ const ChartPanel = ({
           flexDirection: 'column',
           alignItems: 'center',
           padding: '0px 8px',
-          marginBottom: '20px'
+          marginBottom: '10px'
         }}>
           {/* Top line */}
           <div style={{

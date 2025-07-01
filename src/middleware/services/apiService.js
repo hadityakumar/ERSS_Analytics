@@ -48,16 +48,16 @@ export const fetchHotspotData = async () => {
   return response.text();
 };
 
-export const fetchKdeData = async () => {
-  const response = await fetch(`${API_ENDPOINTS.KDE_DATA}?_=${Date.now()}`, {
+export const fetchEmergingHotspotsData = async () => {
+  const response = await fetch(`${API_ENDPOINTS.EMERGING_HOTSPOTS_DATA}?_=${Date.now()}`, {
     cache: 'no-cache'
   });
   
   if (!response.ok) {
-    throw new Error('Failed to fetch KDE data');
+    throw new Error('Failed to fetch emerging hotspots data');
   }
   
-  return response.text();
+  return response.json();
 };
 
 export const fetchGeojsonData = async (url) => {

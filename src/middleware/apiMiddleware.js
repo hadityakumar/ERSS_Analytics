@@ -6,7 +6,7 @@ import {
 } from './handlers/csvHandlers';
 import { 
   handleLoadHotspotData, 
-  handleLoadKdeData 
+  handleLoadEmergingHotspotsData 
 } from './handlers/analysisHandlers';
 import { 
   handlePreloadGeojsonLayer, 
@@ -34,8 +34,8 @@ const apiMiddleware = store => next => action => {
       handleLoadHotspotData(store);
       break;
 
-    case ACTION_TYPES.LOAD_KDE_DATA:
-      handleLoadKdeData(store);
+    case ACTION_TYPES.LOAD_EMERGING_HOTSPOTS_DATA:
+      handleLoadEmergingHotspotsData(store);
       break;
 
     case ACTION_TYPES.PRELOAD_GEOJSON_LAYER:
