@@ -4,17 +4,105 @@ import { fetchHotspotData, fetchEmergingHotspotsData } from '../services/apiServ
 import { centerMapToTrivandrum } from '../utils/mapUtils';
 import { generateDatasetId, generateLayerId } from '../utils/mapUtils';
 
+// Prevent duplicate analysis loading
+let isLoadingHotspots = false;
+let isLoadingEmergingHotspots = false;
+
+// Helper function to remove existing analysis layers
+const removeExistingAnalysisLayer = (store, layerPattern) => {
+  const state = store.getState();
+  const keplerState = state.keplerGl?.map;
+  const existingLayers = keplerState?.visState?.layers || [];
+  
+  const layersToRemove = existingLayers.filter(layer => {
+    if (typeof layerPattern === 'string') {
+      return layer.config?.label?.includes(layerPattern) || 
+             layer.id?.includes(layerPattern) ||
+             layer.config?.dataId?.includes(layerPattern);
+    }
+    return false;
+  });
+
+  if (layersToRemove.length > 0) {
+    console.log(`Removing ${layersToRemove.length} existing analysis layers`);
+    // Note: In a real implementation, you'd use removeLayer action
+    // For now, we'll just log and let the new layer replace it
+  }
+};
+
+// Helper function to check if analysis layer exists
+const analysisLayerExists = (store, layerType) => {
+  const state = store.getState();
+  const keplerState = state.keplerGl?.map;
+  const existingLayers = keplerState?.visState?.layers || [];
+  
+  switch (layerType) {
+    case 'hotspot':
+      return existingLayers.some(layer => 
+        (layer.type === 'heatmap' && layer.config?.label?.includes('Hotspot')) ||
+        layer.config?.label === 'Hotspot Heatmap' ||
+        layer.config?.dataId?.includes('hotspot')
+      );
+    case 'emerging_hotspots':
+      return existingLayers.some(layer => 
+        layer.config?.label?.includes('Emerging Hotspots') ||
+        layer.id?.includes('emerging_hotspots') ||
+        layer.config?.dataId?.includes('emerging_hotspots')
+      );
+    default:
+      return false;
+  }
+};
+
 export const handleLoadHotspotData = async (store) => {
+  // Prevent duplicate loading
+  if (isLoadingHotspots) {
+    console.log('Hotspot data loading already in progress, skipping...');
+    return;
+  }
+
+  isLoadingHotspots = true;
+
   try {
+    // Check if hotspot layer already exists
+    const state = store.getState();
+    const keplerState = state.keplerGl?.map;
+    const existingLayers = keplerState?.visState?.layers || [];
+    
+    const existingHotspotLayer = existingLayers.find(layer => 
+      (layer.type === 'heatmap' && layer.config?.label?.includes('Hotspot')) ||
+      layer.config?.label === 'Hotspot Heatmap' ||
+      layer.config?.dataId?.includes('hotspot')
+    );
+
+    if (existingHotspotLayer) {
+      console.log('Hotspot layer already exists, skipping duplicate load');
+      isLoadingHotspots = false;
+      return;
+    }
+
     const csvText = await fetchHotspotData();
     const parsedData = processCsvData(csvText);
     
     if (parsedData.rows.length === 0) {
       alert('No hotspot data found. Please run the analysis first.');
+      isLoadingHotspots = false;
       return;
     }
 
     const datasetId = generateDatasetId('hotspot');
+    const layerId = generateLayerId('hotspot');
+    
+    console.log(`Adding hotspot dataset with ID: ${datasetId}, Layer ID: ${layerId}`);
+    
+    // Check if dataset already exists
+    const existingDatasets = keplerState?.visState?.datasets || {};
+    if (existingDatasets[datasetId]) {
+      console.log('Hotspot dataset already exists, skipping...');
+      isLoadingHotspots = false;
+      return;
+    }
+    
     store.dispatch(
       addDataToMap({
         datasets: [{
@@ -25,14 +113,14 @@ export const handleLoadHotspotData = async (store) => {
         config: {
           visState: {
             layers: [{
-              id: generateLayerId('hotspot'),
+              id: layerId,
               type: 'heatmap',
               config: {
                 dataId: datasetId,
                 label: 'Hotspot Heatmap',
                 color: [255, 107, 53],
                 columns: { lat: 'latitude', lng: 'longitude' },
-                isVisible: true,
+                isVisible: true, // Start as visible
                 visConfig: {
                   opacity: 0.8,
                   colorRange: {
@@ -54,18 +142,51 @@ export const handleLoadHotspotData = async (store) => {
     setTimeout(() => {
       centerMapToTrivandrum(store);
     }, 500);
+
+    // Notify that hotspot layer is now available and visible
+    console.log('Hotspot layer added and visible');
+    
   } catch (error) {
+    console.error('Error loading hotspot data:', error);
     alert(`Failed to load hotspot data: ${error.message}`);
+  } finally {
+    isLoadingHotspots = false;
   }
 };
 
 export const handleLoadEmergingHotspotsData = async (store) => {
+  // Prevent duplicate loading
+  if (isLoadingEmergingHotspots) {
+    console.log('Emerging hotspots data loading already in progress, skipping...');
+    return;
+  }
+
+  isLoadingEmergingHotspots = true;
+
   try {
+    // Check if emerging hotspots layer already exists
+    const state = store.getState();
+    const keplerState = state.keplerGl?.map;
+    const existingLayers = keplerState?.visState?.layers || [];
+    
+    const existingEmergingLayer = existingLayers.find(layer => 
+      layer.config?.label?.includes('Emerging Hotspots') ||
+      layer.id?.includes('emerging_hotspots') ||
+      layer.config?.dataId?.includes('emerging_hotspots')
+    );
+
+    if (existingEmergingLayer) {
+      console.log('Emerging hotspots layer already exists, skipping duplicate load');
+      isLoadingEmergingHotspots = false;
+      return;
+    }
+
     console.log('Loading emerging hotspots data...');
     const response = await fetchEmergingHotspotsData();
     
     if (!response.success) {
       alert('No emerging hotspots data found. Please run the analysis first.');
+      isLoadingEmergingHotspots = false;
       return;
     }
 
@@ -76,11 +197,13 @@ export const handleLoadEmergingHotspotsData = async (store) => {
     } catch (parseError) {
       console.error('Failed to parse GeoJSON data:', parseError);
       alert('Invalid GeoJSON data format received.');
+      isLoadingEmergingHotspots = false;
       return;
     }
     
     if (!geojsonData.features || geojsonData.features.length === 0) {
       alert('No emerging hotspots detected in the analysis period.');
+      isLoadingEmergingHotspots = false;
       return;
     }
 
@@ -133,12 +256,24 @@ export const handleLoadEmergingHotspotsData = async (store) => {
     
     if (parsedData.rows.length === 0) {
       alert('No valid emerging hotspots data after processing.');
+      isLoadingEmergingHotspots = false;
       return;
     }
 
     console.log('Parsed CSV data:', parsedData);
 
     const datasetId = generateDatasetId('emerging_hotspots');
+    const layerId = generateLayerId('emerging_hotspots_points');
+    
+    console.log(`Adding emerging hotspots dataset with ID: ${datasetId}, Layer ID: ${layerId}`);
+    
+    // Check if dataset already exists
+    const existingDatasets = keplerState?.visState?.datasets || {};
+    if (existingDatasets[datasetId]) {
+      console.log('Emerging hotspots dataset already exists, skipping...');
+      isLoadingEmergingHotspots = false;
+      return;
+    }
     
     // Add the data to the map using point layer (similar to hotspots)
     store.dispatch(
@@ -153,13 +288,13 @@ export const handleLoadEmergingHotspotsData = async (store) => {
         options: { 
           centerMap: false, 
           keepExistingConfig: true, 
-          readOnly: true 
+          readOnly: true
         },
         config: {
           visState: {
             layers: [
               {
-                id: generateLayerId('emerging_hotspots_points'),
+                id: layerId,
                 type: 'point',
                 config: {
                   dataId: datasetId,
@@ -169,7 +304,7 @@ export const handleLoadEmergingHotspotsData = async (store) => {
                     lat: 'latitude',
                     lng: 'longitude'
                   },
-                  isVisible: true,
+                  isVisible: true, // Start as visible
                   visConfig: {
                     opacity: 0.8,
                     thickness: 2,
@@ -232,11 +367,10 @@ export const handleLoadEmergingHotspotsData = async (store) => {
       - Emerging hot spots: ${emergingHotSpots}
       - Cold spots: ${coldSpots}`);
 
-    // Success message
-    alert(`Emerging hotspots analysis loaded: ${features.length} features detected`);
-
   } catch (error) {
     console.error('Failed to load emerging hotspots data:', error);
     alert(`Failed to load emerging hotspots data: ${error.message}`);
+  } finally {
+    isLoadingEmergingHotspots = false;
   }
 };

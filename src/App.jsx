@@ -7,6 +7,7 @@ import './App.css';
 
 // Component imports
 import Header from './components/Header';
+import { ToastContainer } from 'react-toastify';
 import Footer from './components/Footer';
 import MapPanel from './components/MapPanel';
 import DateRangeSelector from './components/DateRangeSelector';
@@ -337,6 +338,18 @@ const App = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
                 <HotspotButton />
                 <EmergingHotspotsButton />
+                <ToastContainer
+                  position="top-right"
+                  autoClose={5000}
+                  hideProgressBar={false}
+                  newestOnTop={false}
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                  theme="dark"
+                />
               </div>
             </ContentPanel>
           </div>

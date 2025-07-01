@@ -183,14 +183,137 @@ export const handleToggleCrimePointsVisibility = (store, { isVisible }) => {
   
   if (keplerState && keplerState.visState && keplerState.visState.layers) {
     const crimePointsLayer = keplerState.visState.layers.find(layer => 
-      layer.type === 'point' || 
-      layer.config.label.includes('Crime') ||
-      layer.config.dataId.includes('csv-data') ||
-      layer.id.includes('points-layer')
+      layer.type === 'point' && 
+      (layer.config.label.includes('Crime') ||
+       layer.config.dataId.includes('csv-data') ||
+       layer.id.includes('points-layer') ||
+       (!layer.config.label.includes('Hotspot') && !layer.config.label.includes('Emerging')))
     );
     
     if (crimePointsLayer) {
       store.dispatch(layerConfigChange(crimePointsLayer, { isVisible }, 'map'));
     }
+  }
+};
+
+export const handleToggleHotspotVisibility = (store, { isVisible }) => {
+  const state = store.getState();
+  const keplerState = state.keplerGl?.map;
+  
+  if (keplerState && keplerState.visState && keplerState.visState.layers) {
+    // Find hotspot layer (heatmap type or contains 'Hotspot' in label but not 'Emerging')
+    const hotspotLayer = keplerState.visState.layers.find(layer => 
+      (layer.type === 'heatmap' && layer.config.label.includes('Hotspot')) ||
+      (layer.config.label.includes('Hotspot') && !layer.config.label.includes('Emerging')) ||
+      layer.id.includes('hotspot') && !layer.id.includes('emerging')
+    );
+    
+    if (hotspotLayer) {
+      store.dispatch(layerConfigChange(hotspotLayer, { isVisible }, 'map'));
+      console.log(`Hotspot layer visibility toggled to: ${isVisible}`);
+    } else {
+      console.warn('No hotspot layer found to toggle');
+    }
+  }
+};
+
+export const handleToggleEmergingHotspotsVisibility = (store, { isVisible }) => {
+  const state = store.getState();
+  const keplerState = state.keplerGl?.map;
+  
+  if (keplerState && keplerState.visState && keplerState.visState.layers) {
+    // Find emerging hotspots layer
+    const emergingHotspotsLayer = keplerState.visState.layers.find(layer => 
+      layer.config.label.includes('Emerging Hotspots') ||
+      layer.id.includes('emerging_hotspots') ||
+      (layer.config.label.includes('Emerging') && layer.config.label.includes('Hotspot'))
+    );
+    
+    if (emergingHotspotsLayer) {
+      store.dispatch(layerConfigChange(emergingHotspotsLayer, { isVisible }, 'map'));
+      console.log(`Emerging hotspots layer visibility toggled to: ${isVisible}`);
+    } else {
+      console.warn('No emerging hotspots layer found to toggle');
+    }
+  }
+};
+
+// Helper function to find layers by type and label patterns
+export const findLayerByPattern = (layers, patterns) => {
+  return layers.find(layer => {
+    return patterns.some(pattern => {
+      if (typeof pattern === 'string') {
+        return layer.config?.label?.includes(pattern) || layer.id?.includes(pattern);
+      }
+      if (typeof pattern === 'object' && pattern.type) {
+        return layer.type === pattern.type && 
+               (!pattern.label || layer.config?.label?.includes(pattern.label));
+      }
+      return false;
+    });
+  });
+};
+
+// Enhanced layer visibility handler with better layer detection
+export const handleToggleLayerVisibility = (store, { layerType, isVisible }) => {
+  const state = store.getState();
+  const keplerState = state.keplerGl?.map;
+  
+  if (!keplerState?.visState?.layers) {
+    console.warn('No layers found in Kepler.gl state');
+    return;
+  }
+  
+  const layers = keplerState.visState.layers;
+  let targetLayer = null;
+  
+  switch (layerType) {
+    case 'crime_points':
+      targetLayer = findLayerByPattern(layers, [
+        { type: 'point', excludeLabels: ['Hotspot', 'Emerging'] },
+        'csv-data',
+        'points-layer'
+      ]);
+      break;
+      
+    case 'hotspot':
+      targetLayer = findLayerByPattern(layers, [
+        { type: 'heatmap' },
+        'Hotspot Analysis',
+        'hotspot'
+      ]);
+      break;
+      
+    case 'emerging_hotspots':
+      targetLayer = findLayerByPattern(layers, [
+        'Emerging Hotspots',
+        'emerging_hotspots'
+      ]);
+      break;
+      
+    case 'city_boundaries':
+      targetLayer = findLayerByPattern(layers, [
+        'City Boundaries',
+        'geojson-data'
+      ]);
+      break;
+      
+    case 'districts':
+      targetLayer = findLayerByPattern(layers, [
+        'Districts',
+        'district-data'
+      ]);
+      break;
+      
+    default:
+      console.warn(`Unknown layer type: ${layerType}`);
+      return;
+  }
+  
+  if (targetLayer) {
+    store.dispatch(layerConfigChange(targetLayer, { isVisible }, 'map'));
+    console.log(`${layerType} layer visibility toggled to: ${isVisible}`);
+  } else {
+    console.warn(`No ${layerType} layer found to toggle`);
   }
 };

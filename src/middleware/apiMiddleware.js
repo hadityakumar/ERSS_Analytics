@@ -6,14 +6,17 @@ import {
 } from './handlers/csvHandlers';
 import { 
   handleLoadHotspotData, 
-  handleLoadEmergingHotspotsData 
+  handleLoadEmergingHotspotsData
 } from './handlers/analysisHandlers';
 import { 
   handlePreloadGeojsonLayer, 
   handlePreloadDistrictLayer, 
   handleToggleGeojsonVisibility, 
   handleToggleDistrictVisibility, 
-  handleToggleCrimePointsVisibility 
+  handleToggleCrimePointsVisibility,
+  handleToggleHotspotVisibility,
+  handleToggleEmergingHotspotsVisibility,
+  handleToggleLayerVisibility
 } from './handlers/layerHandlers';
 
 const apiMiddleware = store => next => action => {
@@ -56,6 +59,18 @@ const apiMiddleware = store => next => action => {
 
     case ACTION_TYPES.TOGGLE_CRIME_POINTS_VISIBILITY:
       handleToggleCrimePointsVisibility(store, action.payload);
+      break;
+
+    case ACTION_TYPES.TOGGLE_HOTSPOT_VISIBILITY:
+      handleToggleHotspotVisibility(store, action.payload);
+      break;
+
+    case ACTION_TYPES.TOGGLE_EMERGING_HOTSPOTS_VISIBILITY:
+      handleToggleEmergingHotspotsVisibility(store, action.payload);
+      break;
+
+    case ACTION_TYPES.TOGGLE_LAYER_VISIBILITY:
+      handleToggleLayerVisibility(store, action.payload);
       break;
 
     default:

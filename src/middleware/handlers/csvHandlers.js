@@ -4,7 +4,47 @@ import { processCsvData as processData, fetchCsvData, fetchFilteredData } from '
 import { loadDataToKepler } from '../services/dataProcessor';
 import { centerMapToTrivandrum, formatDateTimeRange } from '../utils/mapUtils';
 
+// Prevent duplicate CSV loading
+let isLoadingInitialData = false;
+let isLoadingFilteredData = false;
+let isLoadingDateFilteredData = false;
+
 export const handleFetchInitialData = async (store) => {
+  // Prevent duplicate loading
+  if (isLoadingInitialData) {
+    console.log('Initial data loading already in progress, skipping...');
+    return;
+  }
+
+  isLoadingInitialData = true;
+
+  // Check if initial data is already loaded
+  const state = store.getState();
+  const keplerState = state.keplerGl?.map;
+  const existingDatasets = keplerState?.visState?.datasets || {};
+  const existingLayers = keplerState?.visState?.layers || [];
+  
+  // Check if we already have crime data loaded (more comprehensive check)
+  const hasCrimeData = Object.values(existingDatasets).some(dataset => 
+    dataset.label?.includes('Crime Data') || 
+    dataset.id?.includes('csv-data') ||
+    dataset.label?.includes('ps_removed_dt')
+  );
+
+  const hasCrimeLayers = existingLayers.some(layer =>
+    layer.type === 'point' && 
+    !layer.config?.label?.includes('Hotspot') &&
+    !layer.config?.label?.includes('Emerging')
+  );
+
+  if (hasCrimeData || hasCrimeLayers) {
+    console.log('Crime data already loaded (datasets:', hasCrimeData, ', layers:', hasCrimeLayers, '), skipping initial data fetch');
+    isLoadingInitialData = false;
+    return;
+  }
+
+  console.log('No existing crime data found, proceeding with initial load');
+
   store.dispatch({ type: '@@kepler.gl/REGISTER', payload: { id: 'map' } });
   store.dispatch(processingStarted());
 
@@ -16,6 +56,7 @@ export const handleFetchInitialData = async (store) => {
 
     const csvText = await fetchCsvData();
     const parsedData = processCsvData(csvText);
+    console.log('Loading initial crime data to Kepler.gl with', parsedData.rows.length, 'rows');
     loadDataToKepler(store, parsedData, 'Crime Data (Full Dataset)');
     
     // Auto-center map after initial load
@@ -25,11 +66,22 @@ export const handleFetchInitialData = async (store) => {
       store.dispatch({ type: 'PRELOAD_DISTRICT_LAYER' });
     }, 1500);
   } catch (error) {
+    console.error('Error in handleFetchInitialData:', error);
     store.dispatch(processingError(error.message));
+  } finally {
+    isLoadingInitialData = false;
   }
 };
 
 export const handleFetchFilteredByDate = async (store, { startDate, endDate }) => {
+  // Prevent duplicate loading
+  if (isLoadingDateFilteredData) {
+    console.log('Date filtered data loading already in progress, skipping...');
+    return;
+  }
+
+  isLoadingDateFilteredData = true;
+
   store.dispatch({ type: '@@kepler.gl/REGISTER', payload: { id: 'map' } });
   store.dispatch(processingStarted());
 
@@ -42,6 +94,7 @@ export const handleFetchFilteredByDate = async (store, { startDate, endDate }) =
     const csvText = await fetchCsvData();
     const parsedData = processCsvData(csvText);
     const dateTimeRange = formatDateTimeRange(startDate, endDate);
+    console.log('Loading date-filtered crime data to Kepler.gl with', parsedData.rows.length, 'rows');
     loadDataToKepler(store, parsedData, `Crime Data (${dateTimeRange})`);
     
     // Auto-center map after date filtering
@@ -51,7 +104,10 @@ export const handleFetchFilteredByDate = async (store, { startDate, endDate }) =
       store.dispatch({ type: 'PRELOAD_DISTRICT_LAYER' });
     }, 1500);
   } catch (error) {
+    console.error('Error in handleFetchFilteredByDate:', error);
     store.dispatch(processingError(error.message));
+  } finally {
+    isLoadingDateFilteredData = false;
   }
 };
 
@@ -66,6 +122,14 @@ export const handleFetchFilteredData = async (store, {
   mainTypes,
   subtypes
 }) => {
+  // Prevent duplicate loading
+  if (isLoadingFilteredData) {
+    console.log('Filtered data loading already in progress, skipping...');
+    return;
+  }
+
+  isLoadingFilteredData = true;
+
   store.dispatch({ type: '@@kepler.gl/REGISTER', payload: { id: 'map' } });
   store.dispatch(processingStarted());
 
@@ -157,6 +221,7 @@ export const handleFetchFilteredData = async (store, {
       ? `Crime Data (Filtered: ${filterLabels.join(', ')})` 
       : 'Crime Data (All Data)';
       
+    console.log('Loading filtered crime data to Kepler.gl with', parsedData.rows.length, 'rows, label:', label);
     loadDataToKepler(store, parsedData, label);
     
     // Auto-center map after applying filters
@@ -166,6 +231,9 @@ export const handleFetchFilteredData = async (store, {
       store.dispatch({ type: 'PRELOAD_DISTRICT_LAYER' });
     }, 1500);
   } catch (error) {
+    console.error('Error in handleFetchFilteredData:', error);
     store.dispatch(processingError(error.message));
+  } finally {
+    isLoadingFilteredData = false;
   }
 };

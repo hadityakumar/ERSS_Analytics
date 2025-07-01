@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
 
 const HotspotButton = () => {
   const dispatch = useDispatch();
@@ -57,21 +58,91 @@ const HotspotButton = () => {
           payload: result.data 
         });
         
-        alert(`Hotspot analysis completed successfully!\nTotal cells: ${result.details.totalCells}\nHot spots: ${result.details.hotSpots}\nCold spots: ${result.details.coldSpots}`);
+        toast.success(
+          `Hotspot analysis completed successfully!\nTotal cells: ${result.details.totalCells}\nHot spots: ${result.details.hotSpots}\nCold spots: ${result.details.coldSpots}`,
+          {
+            style: {
+              background: '#000000',
+              color: '#ffffff',
+              border: '1px solid #333333',
+              borderRadius: '8px',
+              fontWeight: '500'
+            },
+            progressStyle: {
+              background: '#4ade80'
+            }
+          }
+        );
       } else {
         console.error('Hotspot analysis failed:', result.error);
-        alert(`Hotspot analysis failed: ${result.error}\nDetails: ${result.details || 'Check console for more info'}`);
+        toast.error(
+          `Hotspot analysis failed: ${result.error}`,
+          {
+            style: {
+              background: '#000000',
+              color: '#ffffff',
+              border: '1px solid #dc2626',
+              borderRadius: '8px',
+              fontWeight: '500'
+            },
+            progressStyle: {
+              background: '#ef4444'
+            }
+          }
+        );
       }
     } catch (error) {
       console.error('Error during hotspot analysis:', error);
       
       // More specific error messages
       if (error.message.includes('fetch')) {
-        alert('Network error: Could not connect to server. Please check if the backend is running on localhost:5000');
+        toast.error(
+          'Network error: Could not connect to server. Please check if the backend is running on localhost:5000',
+          {
+            style: {
+              background: '#000000',
+              color: '#ffffff',
+              border: '1px solid #dc2626',
+              borderRadius: '8px',
+              fontWeight: '500'
+            },
+            progressStyle: {
+              background: '#ef4444'
+            }
+          }
+        );
       } else if (error.message.includes('JSON')) {
-        alert('Server returned invalid response. This usually means the API endpoint is not properly configured. Check the browser console for details.');
+        toast.error(
+          'Server returned invalid response. This usually means the API endpoint is not properly configured. Check the browser console for details.',
+          {
+            style: {
+              background: '#000000',
+              color: '#ffffff',
+              border: '1px solid #dc2626',
+              borderRadius: '8px',
+              fontWeight: '500'
+            },
+            progressStyle: {
+              background: '#ef4444'
+            }
+          }
+        );
       } else {
-        alert(`Error during hotspot analysis: ${error.message}`);
+        toast.error(
+          `Error during hotspot analysis: ${error.message}`,
+          {
+            style: {
+              background: '#000000',
+              color: '#ffffff',
+              border: '1px solid #dc2626',
+              borderRadius: '8px',
+              fontWeight: '500'
+            },
+            progressStyle: {
+              background: '#ef4444'
+            }
+          }
+        );
       }
     } finally {
       setIsAnalyzing(false);

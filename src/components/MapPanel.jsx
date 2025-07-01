@@ -3,6 +3,8 @@ import CenterButton from './CenterButton';
 import ToggleLayerButton from './ToggleLayerButton';
 import ToggleCrimePointsButton from './ToggleCrimePointsButton';
 import ToggleDistrictButton from './ToggleDistrictButton';
+import ToggleHotspotButton from './ToggleHotspotButton';
+import ToggleEmergingHotspotsButton from './ToggleEmergingHotspotsButton';
 
 const MapPanel = () => {
   return (
@@ -36,6 +38,12 @@ const MapPanel = () => {
       
       <div style={{ position: 'relative' }}>
         <ToggleDistrictButton />
+      </div>
+      <div>
+        <ToggleHotspotButton />
+      </div>
+      <div>
+        <ToggleEmergingHotspotsButton />
       </div>
       <div>
         <img src="snapshot.svg" alt="" />

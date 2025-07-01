@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
 
 const EmergingHotspotsButton = () => {
   const dispatch = useDispatch();
@@ -58,20 +59,90 @@ const EmergingHotspotsButton = () => {
           payload: result.data 
         });
         
-        alert(`Emerging hotspots analysis completed successfully!\nTime periods analyzed: ${result.details.timePeriods}\nTotal hotspots: ${result.details.totalHotspots}\nEmerging patterns: ${result.details.emergingPatterns}`);
+        toast.success(
+          `Emerging hotspots analysis completed successfully!\n`,
+          {
+            style: {
+              background: '#000000',
+              color: '#ffffff',
+              border: '1px solid #333333',
+              borderRadius: '8px',
+              fontWeight: '500'
+            },
+            progressStyle: {
+              background: '#4ade80'
+            }
+          }
+        );
       } else {
         console.error('Emerging hotspots analysis failed:', result.error);
-        alert(`Emerging hotspots analysis failed: ${result.error}\nDetails: ${result.details || 'Check console for more info'}`);
+        toast.error(
+          `Emerging hotspots analysis failed`,
+          {
+            style: {
+              background: '#000000',
+              color: '#ffffff',
+              border: '1px solid #dc2626',
+              borderRadius: '8px',
+              fontWeight: '500'
+            },
+            progressStyle: {
+              background: '#ef4444'
+            }
+          }
+        );
       }
     } catch (error) {
       console.error('Error during emerging hotspots analysis:', error);
       
       if (error.message.includes('fetch')) {
-        alert('Network error: Could not connect to server. Please check if the backend is running on localhost:5000');
+        toast.error(
+          'Network error: Could not connect to server',
+          {
+            style: {
+              background: '#000000',
+              color: '#ffffff',
+              border: '1px solid #dc2626',
+              borderRadius: '8px',
+              fontWeight: '500'
+            },
+            progressStyle: {
+              background: '#ef4444'
+            }
+          }
+        );
       } else if (error.message.includes('JSON')) {
-        alert('Server returned invalid response. This usually means the API endpoint is not properly configured. Check the browser console for details.');
+        toast.error(
+          'Server returned invalid response',
+          {
+            style: {
+              background: '#000000',
+              color: '#ffffff',
+              border: '1px solid #dc2626',
+              borderRadius: '8px',
+              fontWeight: '500'
+            },
+            progressStyle: {
+              background: '#ef4444'
+            }
+          }
+        );
       } else {
-        alert(`Error during emerging hotspots analysis: ${error.message}`);
+        toast.error(
+          `Error during emerging hotspots analysis`,
+          {
+            style: {
+              background: '#000000',
+              color: '#ffffff',
+              border: '1px solid #dc2626',
+              borderRadius: '8px',
+              fontWeight: '500'
+            },
+            progressStyle: {
+              background: '#ef4444'
+            }
+          }
+        );
       }
     } finally {
       setIsAnalyzing(false);
