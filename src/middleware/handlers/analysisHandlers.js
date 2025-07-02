@@ -109,7 +109,7 @@ export const handleLoadHotspotData = async (store) => {
           info: { id: datasetId, label: 'Hotspot Analysis' },
           data: parsedData
         }],
-        options: { centerMap: false, keepExistingConfig: true, readOnly: true },
+        options: { centerMap: false, keepExistingConfig: true, readOnly: false },
         config: {
           visState: {
             layers: [{
@@ -122,11 +122,11 @@ export const handleLoadHotspotData = async (store) => {
                 columns: { lat: 'latitude', lng: 'longitude' },
                 isVisible: true, // Start as visible
                 visConfig: {
-                  opacity: 0.8,
+                  opacity: 0.5,
                   colorRange: {
-                    colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+                    colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300'] //colors apply
                   },
-                  radius: 60,
+                  radius: 75,
                   intensity: 1,
                   threshold: 0.05
                 },

@@ -1,6 +1,6 @@
 {
   "version": 8,
-  "name": "Basic Preview",
+  "name": "Dark Preview",
   "glyphs": "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
   "sources": {
     "openmaptiles": {
@@ -13,7 +13,7 @@
       "id": "background",
       "type": "background",
       "paint": {
-        "background-color": "#f8f4f0"
+        "background-color": "#1a1a1a"
       }
     },
     {
@@ -22,7 +22,7 @@
       "source": "openmaptiles",
       "source-layer": "water",
       "paint": {
-        "fill-color": "#a0c8f0"
+        "fill-color": "#2d4a5c"
       }
     },
     {
@@ -31,7 +31,7 @@
       "source": "openmaptiles",
       "source-layer": "landuse",
       "paint": {
-        "fill-color": "#e8eddb"
+        "fill-color": "#2a2a2a"
       }
     },
     {
@@ -40,7 +40,7 @@
       "source": "openmaptiles",
       "source-layer": "transportation",
       "paint": {
-        "line-color": "#ffffff",
+        "line-color": "#404040",
         "line-width": 2
       }
     },
@@ -50,8 +50,8 @@
       "source": "openmaptiles",
       "source-layer": "building",
       "paint": {
-        "fill-color": "#d6d6d6",
-        "fill-outline-color": "#bfbfbf"
+        "fill-color": "#333333",
+        "fill-outline-color": "#555555"
       }
     },
     {
@@ -67,8 +67,8 @@
         "text-rotation-alignment": "map"
       },
       "paint": {
-        "text-color": "#333333",
-        "text-halo-color": "#ffffff",
+        "text-color": "#e0e0e0",
+        "text-halo-color": "#1a1a1a",
         "text-halo-width": 1
       }
     },
@@ -84,8 +84,8 @@
         "text-anchor": "center"
       },
       "paint": {
-        "text-color": "#333333",
-        "text-halo-color": "#ffffff",
+        "text-color": "#ffffff",
+        "text-halo-color": "#1a1a1a",
         "text-halo-width": 1
       }
     }

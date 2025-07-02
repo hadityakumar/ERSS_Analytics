@@ -105,7 +105,7 @@ def perform_hotspot_analysis(start_date=None, end_date=None):
         # Calculate spatial weights
         weights = DistanceBand.from_dataframe(
             grid_populated_pts, 
-            threshold=2000, 
+            threshold=500, 
             binary=False,
             alpha=-2.0,
             silence_warnings=True

@@ -11,7 +11,7 @@
   },
   "styles": {
     "basic-preview": {
-      "style": "basic-preview/style.json",
+      "style": "./styles/basic-preview/style.json",
       "tilejson": {
         "bounds": [
           76.0,
