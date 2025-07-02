@@ -1,7 +1,7 @@
 {
   "version": 8,
   "name": "Basic Preview",
-  "glyphs": "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+  "glyphs": "/fonts/{fontstack}/{range}.pbf",
   "sources": {
     "openmaptiles": {
       "type": "vector",
@@ -61,7 +61,7 @@
       "source-layer": "transportation_name",
       "layout": {
         "text-field": "{name}",
-        "text-font": ["Noto Sans Regular"],
+        "text-font": ["Open Sans Semibold"],
         "text-size": 12,
         "symbol-placement": "line",
         "text-rotation-alignment": "map"
@@ -79,7 +79,7 @@
       "source-layer": "place",
       "layout": {
         "text-field": "{name}",
-        "text-font": ["Noto Sans Regular"],
+        "text-font": ["Open Sans Semibold"],
         "text-size": 14,
         "text-anchor": "center"
       },
