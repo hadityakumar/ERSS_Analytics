@@ -18,8 +18,12 @@ const ApplyFiltersButton = ({
       return { isValid: true };
     }
 
-    const startDateTime = `${dateRange.fromDate} ${dateRange.fromTime}:00`;
-    const endDateTime = `${dateRange.toDate} ${dateRange.toTime}:59`;
+    // Ensure proper datetime format (YYYY-MM-DD HH:MM:SS)
+    const fromTimeParts = dateRange.fromTime.split(':');
+    const toTimeParts = dateRange.toTime.split(':');
+    
+    const startDateTime = `${dateRange.fromDate} ${fromTimeParts[0]}:${fromTimeParts[1]}:00`;
+    const endDateTime = `${dateRange.toDate} ${toTimeParts[0]}:${toTimeParts[1]}:59`;
     
     if (new Date(startDateTime) > new Date(endDateTime)) {
       return { 
@@ -48,12 +52,23 @@ const ApplyFiltersButton = ({
       }
 
       // Check what filters we have
-      const hasDateRange = selectedDateRange?.hasDateRange;
-      const hasOtherFilters = !selectedSeverities.includes('All Levels') || 
-                             !selectedPartOfDay.includes('All Times') || 
-                             selectedCityLocation !== 'all' ||
-                             !selectedMainTypes.includes('All Types') ||
-                             !selectedSubtypes.includes('All Subtypes');
+      const hasDateRange = selectedDateRange?.hasDateRange && 
+                          selectedDateRange?.fromDate && 
+                          selectedDateRange?.toDate &&
+                          dateValidation.isValid;
+                          
+      console.log('=== DATE RANGE DETECTION ===');
+      console.log('selectedDateRange?.hasDateRange:', selectedDateRange?.hasDateRange);
+      console.log('selectedDateRange?.fromDate:', selectedDateRange?.fromDate);
+      console.log('selectedDateRange?.toDate:', selectedDateRange?.toDate);
+      console.log('dateValidation.isValid:', dateValidation.isValid);
+      console.log('Final hasDateRange:', hasDateRange);
+      
+      const hasOtherFilters = (!selectedSeverities.includes('All Levels') && selectedSeverities.length > 0) || 
+                             (!selectedPartOfDay.includes('All Times') && selectedPartOfDay.length > 0) || 
+                             (selectedCityLocation && selectedCityLocation !== 'all') ||
+                             (!selectedMainTypes.includes('All Types') && selectedMainTypes.length > 0) ||
+                             (!selectedSubtypes.includes('All Subtypes') && selectedSubtypes.length > 0);
 
       if (hasDateRange && hasOtherFilters) {
         // Apply both date range and other filters together
@@ -71,7 +86,8 @@ const ApplyFiltersButton = ({
           mainTypes: selectedMainTypes.includes('All Types') ? [] : selectedMainTypes,
           subtypes: selectedSubtypes.includes('All Subtypes') ? [] : selectedSubtypes,
           isFiltered: true,
-          combinedFiltering: true // Flag to indicate both datetime and other filters
+          combinedFiltering: true, // Flag to indicate both datetime and other filters
+          twoStepFiltering: true // Flag to enable two-step filtering process
         };
 
         console.log('Applying combined filters with payload:', filterPayload);
@@ -88,12 +104,36 @@ const ApplyFiltersButton = ({
           endDate: dateValidation.endDateTime 
         }));
 
-        dispatch({
-          type: 'FETCH_CSV_DATA_FILTERED', 
-          payload: { 
-            startDate: dateValidation.startDateTime, 
-            endDate: dateValidation.endDateTime 
-          }
+        console.log('=== APPLY FILTERS DEBUG ===');
+        console.log('hasDateRange:', hasDateRange);
+        console.log('hasOtherFilters:', hasOtherFilters);
+        console.log('dateValidation:', dateValidation);
+        console.log('selectedDateRange:', selectedDateRange);
+        console.log('selectedSeverities:', selectedSeverities);
+        console.log('selectedPartOfDay:', selectedPartOfDay);
+        console.log('selectedCityLocation:', selectedCityLocation);
+        console.log('selectedMainTypes:', selectedMainTypes);
+        console.log('selectedSubtypes:', selectedSubtypes);
+
+        // Ensure clean date-only payload with no filter contamination
+        const dateOnlyPayload = {
+          startDate: dateValidation.startDateTime,
+          endDate: dateValidation.endDateTime,
+          severities: [],
+          partOfDay: [],
+          cityLocation: 'all',
+          mainTypes: [],
+          subtypes: [],
+          isFiltered: false,
+          combinedFiltering: false,
+          twoStepFiltering: false
+        };
+
+        console.log('Applying date-only filters with payload:', dateOnlyPayload);
+        
+        dispatch({ 
+          type: 'FETCH_FILTERED_CSV_DATA',
+          payload: dateOnlyPayload
         });
 
       } else if (hasOtherFilters) {

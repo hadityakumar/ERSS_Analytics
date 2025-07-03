@@ -17,15 +17,25 @@ def main():
         spatial_processor = SpatialProcessor()
         
         # Load and prepare data
-        csv1, csv2, city_geometries = data_loader.load_all_data()
-        csv1 = data_loader.prepare_data(csv1, city_geometries)
-        
-        # Apply datetime filtering if provided
-        if args.start_date and args.end_date:
-            csv1 = filter_processor.apply_datetime_filter(csv1, args.start_date, args.end_date)
-        
-        # Apply spatial filtering (remove points near police stations)
-        processed_df = spatial_processor.remove_near_police_stations(csv1, csv2)
+        if args.use_date_filtered_base:
+            # Load from pre-filtered data (ps_removed_dt.csv)
+            import os
+            if os.path.exists('ps_removed_dt.csv'):
+                processed_df = pd.read_csv('ps_removed_dt.csv')
+                print("Loaded date-filtered base data from ps_removed_dt.csv")
+            else:
+                raise FileNotFoundError("ps_removed_dt.csv not found. Date filtering must be performed first.")
+        else:
+            # Load original data and prepare
+            csv1, csv2, city_geometries = data_loader.load_all_data()
+            csv1 = data_loader.prepare_data(csv1, city_geometries)
+            
+            # Apply datetime filtering if provided
+            if args.start_date and args.end_date:
+                csv1 = filter_processor.apply_datetime_filter(csv1, args.start_date, args.end_date)
+            
+            # Apply spatial filtering (remove points near police stations)
+            processed_df = spatial_processor.remove_near_police_stations(csv1, csv2)
         
         # Apply additional filters if needed
         has_other_filters = filter_processor.has_filters(args)
@@ -34,6 +44,11 @@ def main():
             output_file = 'filtered_data.csv'
         else:
             output_file = 'ps_removed_dt.csv'
+            # Remove filtered_data.csv if it exists when only date filtering is applied
+            import os
+            if os.path.exists('filtered_data.csv'):
+                os.remove('filtered_data.csv')
+                print("Removed existing filtered_data.csv (date-only filtering)")
         
         # Save result
         processed_df.to_csv(output_file, index=False, encoding='utf-8')
@@ -55,6 +70,8 @@ def parse_arguments():
                        default='all', help='City location filter')
     parser.add_argument('--combined-filtering', action='store_true', 
                        help='Apply combined filtering')
+    parser.add_argument('--use-date-filtered-base', action='store_true',
+                       help='Use ps_removed_dt.csv as base data instead of original data')
     return parser.parse_args()
 
 if __name__ == "__main__":

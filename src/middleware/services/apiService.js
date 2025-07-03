@@ -15,7 +15,9 @@ export const processCsvData = async (payload) => {
 };
 
 export const fetchCsvData = async (filename = 'ps_removed_dt.csv') => {
-  const response = await fetch(`http://localhost:5000/${filename}`);
+  const response = await fetch(`http://localhost:5000/${filename}?_=${Date.now()}`, {
+    cache: 'no-store'
+  });
   
   if (!response.ok) {
     throw new Error('Failed to fetch CSV data');

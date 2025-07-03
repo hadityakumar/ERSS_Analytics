@@ -48,22 +48,12 @@ const executePythonScript = (action, filters, res) => {
     const backendDir = path.dirname(__dirname); // Go up from routes to backend
     const pythonScriptPath = path.join(backendDir, 'process_data_python_charts.py');
     
-    console.log(`\n=== CHART API DEBUG ===`);
-    console.log(`Action: ${action}`);
-    console.log(`Raw filters:`, filters);
-    console.log(`Processed filters:`, processedFilters);
-    console.log(`Python script path: ${pythonScriptPath}`);
-    console.log(`Backend directory: ${backendDir}`);
-    
     // Check if files exist
     const primaryFile = path.join(backendDir, 'filtered_data.csv');
     const fallbackFile = path.join(backendDir, 'ps_removed_dt.csv');
-    console.log(`Primary file (filtered_data.csv) exists: ${fs.existsSync(primaryFile)}`);
-    console.log(`Fallback file (ps_removed_dt.csv) exists: ${fs.existsSync(fallbackFile)}`);
     
     // Check if Python script exists
     if (!fs.existsSync(pythonScriptPath)) {
-        console.error(`Python script not found at: ${pythonScriptPath}`);
         res.status(500).json({ error: `Python script not found at: ${pythonScriptPath}` });
         return;
     }
@@ -84,38 +74,21 @@ const executePythonScript = (action, filters, res) => {
 
     pythonProcess.stderr.on('data', (chunk) => {
         errorOutput += chunk.toString();
-        console.log(`Python stderr: ${chunk.toString()}`);
     });
 
     pythonProcess.on('close', (code) => {
-        console.log(`Python process exited with code: ${code}`);
-        console.log(`Python stdout: ${data}`);
-        if (errorOutput) console.log(`Python stderr: ${errorOutput}`);
-        
         if (code === 0) {
             try {
                 const parsedData = JSON.parse(data);
-                console.log(`Parsed data keys:`, Object.keys(parsedData));
-                if (parsedData.data && Array.isArray(parsedData.data)) {
-                    console.log(`Data array length: ${parsedData.data.length}`);
-                }
-                if (parsedData.current_trend && Array.isArray(parsedData.current_trend)) {
-                    console.log(`Current trend length: ${parsedData.current_trend.length}`);
-                }
-                
                 if (parsedData.error) {
-                    console.error(`Python script reported an error for action "${action}":`, parsedData.error);
                     res.status(500).json({ error: parsedData.error, details: errorOutput });
                 } else {
                     res.json(parsedData);
                 }
             } catch (e) {
-                console.error(`Failed to parse Python script output for action "${action}":`, e);
-                console.error('Raw Python Output:', data);
                 res.status(500).json({ error: 'Failed to parse data from Python script.', details: errorOutput, rawOutput: data });
             }
         } else {
-            console.error(`Python script for action "${action}" exited with code ${code}`);
             res.status(500).json({ error: `Python script error for action "${action}": ${errorOutput}` });
         }
     });

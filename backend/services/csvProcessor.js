@@ -15,14 +15,15 @@ export class CSVProcessor {
     const {
       startDate, endDate, mainTypes, subtypes,
       severities, partOfDay, cityLocation,
-      isFiltered = false, combinedFiltering = false
+      isFiltered = false, combinedFiltering = false,
+      useDateFilteredBase = false
     } = requestData;
 
     // Build Python command
     const pythonArgs = this.commandBuilder.buildCommand({
       startDate, endDate, mainTypes, subtypes,
       severities, partOfDay, cityLocation,
-      isFiltered, combinedFiltering
+      isFiltered, combinedFiltering, useDateFilteredBase
     });
 
     // Execute Python script

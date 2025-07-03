@@ -86,12 +86,21 @@ export const handleFetchFilteredByDate = async (store, { startDate, endDate }) =
   store.dispatch(processingStarted());
 
   try {
+    console.log('=== DATE-ONLY FILTER DEBUG ===');
+    console.log('Calling backend with payload:', { startDate, endDate, isFiltered: false });
+    
     const processingResult = await processData({ startDate, endDate, isFiltered: false });
     if (!processingResult.success) {
       throw new Error(processingResult.error || 'Processing failed');
     }
 
+    console.log('Backend processing completed, waiting before fetching...');
+    // Add delay to ensure file is written
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     const csvText = await fetchCsvData();
+    console.log('Fetched CSV data, first 100 chars:', csvText.substring(0, 100));
+    
     const parsedData = processCsvData(csvText);
     const dateTimeRange = formatDateTimeRange(startDate, endDate);
     console.log('Loading date-filtered crime data to Kepler.gl with', parsedData.rows.length, 'rows');
@@ -120,7 +129,8 @@ export const handleFetchFilteredData = async (store, {
   endDate, 
   combinedFiltering,
   mainTypes,
-  subtypes
+  subtypes,
+  twoStepFiltering
 }) => {
   // Prevent duplicate loading
   if (isLoadingFilteredData) {
@@ -134,6 +144,15 @@ export const handleFetchFilteredData = async (store, {
   store.dispatch(processingStarted());
 
   try {
+    console.log('=== RECEIVED PAYLOAD ===');
+    console.log('Raw startDate:', startDate, 'Type:', typeof startDate);
+    console.log('Raw endDate:', endDate, 'Type:', typeof endDate);
+    console.log('Raw severities:', severities, 'Type:', typeof severities, 'Length:', severities?.length);
+    console.log('Raw partOfDay:', partOfDay, 'Type:', typeof partOfDay, 'Length:', partOfDay?.length);
+    console.log('Raw cityLocation:', cityLocation, 'Type:', typeof cityLocation);
+    console.log('Raw mainTypes:', mainTypes, 'Type:', typeof mainTypes, 'Length:', mainTypes?.length);
+    console.log('Raw subtypes:', subtypes, 'Type:', typeof subtypes, 'Length:', subtypes?.length);
+    
     const hasDateRange = startDate && endDate;
     const hasOtherFilters = (severities && severities.length > 0) || 
                            (partOfDay && partOfDay.length > 0) || 
@@ -141,53 +160,141 @@ export const handleFetchFilteredData = async (store, {
                            (mainTypes && mainTypes.length > 0) ||
                            (subtypes && subtypes.length > 0);
 
-    // Prepare the payload for the backend
-    const backendPayload = {
-      isFiltered: isFiltered || hasOtherFilters
-    };
+    console.log('Filter analysis:', {
+      hasDateRange,
+      hasOtherFilters,
+      combinedFiltering,
+      twoStepFiltering,
+      startDate,
+      endDate,
+      severities,
+      partOfDay,
+      cityLocation,
+      mainTypes,
+      subtypes
+    });
 
-    // Add date range if provided
-    if (hasDateRange) {
-      backendPayload.startDate = startDate;
-      backendPayload.endDate = endDate;
-    }
+    console.log('=== DECISION LOGIC ===');
+    console.log('hasDateRange && hasOtherFilters:', hasDateRange && hasOtherFilters);
+    console.log('hasDateRange only:', hasDateRange && !hasOtherFilters);
+    console.log('hasOtherFilters only:', !hasDateRange && hasOtherFilters);
+    console.log('no filters:', !hasDateRange && !hasOtherFilters);
 
-    // Add other filters if provided
-    if (hasOtherFilters) {
-      if (severities && severities.length > 0) {
-        backendPayload.severities = severities;
-      }
-      if (partOfDay && partOfDay.length > 0) {
-        backendPayload.partOfDay = partOfDay;
-      }
-      if (cityLocation && cityLocation !== 'all') {
-        backendPayload.cityLocation = cityLocation;
-      }
-      if (mainTypes && mainTypes.length > 0) {
-        backendPayload.mainTypes = mainTypes;
-      }
-      if (subtypes && subtypes.length > 0) {
-        backendPayload.subtypes = subtypes;
-      }
-    }
-
-    // Add combined filtering flag
-    if (combinedFiltering) {
-      backendPayload.combinedFiltering = true;
-    }
-
-    console.log('Backend payload:', backendPayload);
-
-    const processingResult = await processData(backendPayload);
-
-    if (!processingResult.success) {
-      throw new Error(processingResult.error || 'Processing failed');
-    }
+    let parsedData;
     
-    // Determine which CSV file to fetch
-    const csvFile = (backendPayload.isFiltered && hasOtherFilters) ? 'filtered_data.csv' : 'ps_removed_dt.csv';
-    const csvText = await fetchCsvData(csvFile);
-    const parsedData = processCsvData(csvText);
+    if (hasDateRange && hasOtherFilters) {
+      // TWO-STEP FILTERING PROCESS
+      console.log('=== EXECUTING TWO-STEP FILTERING PROCESS ===');
+      
+      // Step 1: Apply date filtering to create ps_removed_dt.csv
+      console.log('Step 1: Applying date filtering to create ps_removed_dt.csv...');
+      const dateFilterPayload = {
+        startDate,
+        endDate,
+        isFiltered: false // Only date filtering, no other filters
+      };
+      
+      console.log('Date filter payload:', dateFilterPayload);
+      const dateProcessingResult = await processData(dateFilterPayload);
+      
+      if (!dateProcessingResult.success) {
+        throw new Error(dateProcessingResult.error || 'Date filtering failed in Step 1');
+      }
+      
+      console.log('Step 1 completed: ps_removed_dt.csv created with date filtering');
+      
+      // Step 2: Apply other filters to the date-filtered ps_removed_dt.csv
+      console.log('Step 2: Applying other filters to date-filtered data...');
+      
+      // Wait a moment to ensure the file is written
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const otherFiltersPayload = {
+        severities,
+        partOfDay,
+        cityLocation,
+        mainTypes,
+        subtypes,
+        isFiltered: true, // Apply other filters to existing ps_removed_dt.csv
+        useDateFilteredBase: true // Flag to use existing ps_removed_dt.csv
+      };
+      
+      console.log('Other filters payload:', otherFiltersPayload);
+      const otherFiltersResult = await processData(otherFiltersPayload);
+      
+      if (!otherFiltersResult.success) {
+        throw new Error(otherFiltersResult.error || 'Other filters failed in Step 2');
+      }
+      
+      console.log('Step 2 completed: filtered_data.csv created with all filters');
+      
+      // Fetch the final filtered data
+      const csvText = await fetchCsvData('filtered_data.csv');
+      parsedData = processCsvData(csvText);
+      console.log('Two-step filtering completed successfully, loaded', parsedData.rows.length, 'rows');
+      
+    } else if (hasDateRange) {
+      // DATE-ONLY FILTERING
+      console.log('=== DATE-ONLY FILTERING BRANCH TRIGGERED ===');
+      console.log('About to call backend API for date-only filtering...');
+      
+      const dateOnlyPayload = {
+        startDate,
+        endDate,
+        isFiltered: false
+      };
+      
+      console.log('Backend payload:', dateOnlyPayload);
+      console.log('Making API call to backend...');
+      
+      const processingResult = await processData(dateOnlyPayload);
+      console.log('Backend API response:', processingResult);
+      
+      if (!processingResult.success) {
+        throw new Error(processingResult.error || 'Date filtering failed');
+      }
+      
+      console.log('Backend processing completed, now fetching ps_removed_dt.csv...');
+      const csvText = await fetchCsvData('ps_removed_dt.csv');
+      console.log('Fetched CSV - first 200 chars:', csvText.substring(0, 200));
+      
+      parsedData = processCsvData(csvText);
+      console.log('Date-only filtering completed, loaded', parsedData.rows.length, 'rows');
+      
+    } else if (hasOtherFilters) {
+      // OTHER FILTERS ONLY
+      console.log('Applying other filters only...');
+      
+      const otherOnlyPayload = {
+        severities,
+        partOfDay,
+        cityLocation,
+        mainTypes,
+        subtypes,
+        isFiltered: true
+      };
+      
+      const processingResult = await processData(otherOnlyPayload);
+      if (!processingResult.success) {
+        throw new Error(processingResult.error || 'Other filters failed');
+      }
+      
+      const csvFile = 'filtered_data.csv';
+      const csvText = await fetchCsvData(csvFile);
+      parsedData = processCsvData(csvText);
+      
+    } else {
+      // NO FILTERS - FULL DATASET
+      console.log('No filters applied, fetching full dataset...');
+      
+      const processingResult = await processData({ isFiltered: false });
+      if (!processingResult.success) {
+        throw new Error(processingResult.error || 'Processing failed');
+      }
+      
+      const csvText = await fetchCsvData('ps_removed_dt.csv');
+      parsedData = processCsvData(csvText);
+    }
     
     if (parsedData.rows.length === 0) {
       throw new Error('No data points match the applied filters.');

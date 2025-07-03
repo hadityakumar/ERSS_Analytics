@@ -139,9 +139,9 @@ export const handleLoadHotspotData = async (store) => {
     );
 
     // Auto-center map after hotspot analysis
-    setTimeout(() => {
-      centerMapToTrivandrum(store);
-    }, 500);
+    // setTimeout(() => {
+    //   centerMapToTrivandrum(store);
+    // }, 500);
 
     // Notify that hotspot layer is now available and visible
     console.log('Hotspot layer added and visible');
@@ -351,9 +351,9 @@ export const handleLoadEmergingHotspotsData = async (store) => {
     );
 
     // Auto-center map after emerging hotspots analysis
-    setTimeout(() => {
-      centerMapToTrivandrum(store);
-    }, 500);
+    // setTimeout(() => {
+    //   centerMapToTrivandrum(store);
+    // }, 500);
 
     // Show analysis summary
     const features = geojsonData.features;
