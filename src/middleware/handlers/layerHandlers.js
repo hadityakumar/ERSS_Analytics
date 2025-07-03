@@ -49,8 +49,8 @@ export const handlePreloadGeojsonLayer = async (store) => {
                 isVisible: cityBoundariesVisible,
                 visConfig: {
                   opacity: 1,
-                  strokeWidth: 30,
-                  strokeColor: [0, 0, 0],
+                  strokeWidth: 50,
+                  strokeColor: [255, 255, 255],
                   filled: false,
                   enable3d: false,
                   stroked: true,
@@ -106,7 +106,7 @@ export const handlePreloadDistrictLayer = async (store) => {
                 visConfig: {
                   opacity: 1,
                   strokeWidth: 50,
-                  strokeColor: [0, 0, 0],
+                  strokeColor: [255, 255, 255],
                   filled: false,
                   enable3d: false,
                   stroked: true,
