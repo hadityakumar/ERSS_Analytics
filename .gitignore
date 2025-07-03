@@ -26,3 +26,5 @@ dist-ssr
 *.sw?
 .venv
 venv/
+ps_removed_dt.csv
+filtered_data.csv

@@ -9,33 +9,30 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 router.post('/hotspot-analysis', async (req, res) => {
+  let responded = false; // Flag to prevent multiple responses
+
   try {
     const { startDate, endDate } = req.body;
-    
-    console.log('Starting hotspot analysis...');
-    console.log('Date range:', startDate, 'to', endDate);
-    
+
     // Path to the Python script (one level up from routes directory)
     const pythonScriptPath = path.join(__dirname, '..', 'hotspot_analysis.py');
     const outputPath = path.join(__dirname, '..', 'hotspot_analysis_results.csv');
-    
-    console.log('Python script path:', pythonScriptPath);
-    console.log('Output path:', outputPath);
-    
+
     // Check if Python script exists
     if (!fs.existsSync(pythonScriptPath)) {
+      responded = true;
       return res.status(500).json({
         success: false,
         error: 'Hotspot analysis script not found',
         details: `Script not found at: ${pythonScriptPath}`
       });
     }
-    
+
     // Remove existing output file if it exists
     if (fs.existsSync(outputPath)) {
       fs.unlinkSync(outputPath);
     }
-    
+
     // Prepare Python command arguments
     const pythonArgs = [pythonScriptPath];
     if (startDate) {
@@ -44,32 +41,27 @@ router.post('/hotspot-analysis', async (req, res) => {
     if (endDate) {
       pythonArgs.push('--end-date', endDate);
     }
-    
-    console.log('Executing Python command:', 'python', pythonArgs);
-    
+
     // Execute Python script
     const pythonProcess = spawn('python', pythonArgs, {
       cwd: path.join(__dirname, '..')
     });
-    
+
     let stdout = '';
     let stderr = '';
-    
+
     pythonProcess.stdout.on('data', (data) => {
-      const output = data.toString();
-      stdout += output;
-      console.log('Python stdout:', output);
+      stdout += data.toString();
     });
-    
+
     pythonProcess.stderr.on('data', (data) => {
-      const error = data.toString();
-      stderr += error;
-      console.error('Python stderr:', error);
+      stderr += data.toString();
     });
-    
+
     pythonProcess.on('close', (code) => {
-      console.log(`Python process exited with code ${code}`);
-      
+      if (responded) return;
+      responded = true;
+
       if (code === 0) {
         // Check if output file was created
         if (fs.existsSync(outputPath)) {
@@ -77,18 +69,18 @@ router.post('/hotspot-analysis', async (req, res) => {
             const csvData = fs.readFileSync(outputPath, 'utf8');
             const lines = csvData.split('\n').filter(line => line.trim() !== '');
             const hotspotCount = lines.length - 1; // Subtract header
-            
+
             // Parse CSV to get statistics
             const dataLines = lines.slice(1); // Skip header
             let hotSpots = 0;
             let coldSpots = 0;
-            
+
             dataLines.forEach(line => {
               if (line.includes('Hot Spot')) hotSpots++;
               if (line.includes('Cold Spot')) coldSpots++;
             });
-            
-            res.json({
+
+            return res.json({
               success: true,
               message: 'Hotspot analysis completed successfully',
               details: {
@@ -105,15 +97,14 @@ router.post('/hotspot-analysis', async (req, res) => {
               }
             });
           } catch (readError) {
-            console.error('Error reading output file:', readError);
-            res.status(500).json({
+            return res.status(500).json({
               success: false,
               error: 'Failed to read hotspot analysis results',
               details: readError.message
             });
           }
         } else {
-          res.status(500).json({
+          return res.status(500).json({
             success: false,
             error: 'Hotspot analysis completed but no output file was generated',
             details: {
@@ -124,7 +115,7 @@ router.post('/hotspot-analysis', async (req, res) => {
           });
         }
       } else {
-        res.status(500).json({
+        return res.status(500).json({
           success: false,
           error: 'Hotspot analysis failed',
           details: {
@@ -136,10 +127,11 @@ router.post('/hotspot-analysis', async (req, res) => {
         });
       }
     });
-    
+
     pythonProcess.on('error', (error) => {
-      console.error('Failed to start Python process:', error);
-      res.status(500).json({
+      if (responded) return;
+      responded = true;
+      return res.status(500).json({
         success: false,
         error: 'Failed to execute hotspot analysis',
         details: {
@@ -148,26 +140,29 @@ router.post('/hotspot-analysis', async (req, res) => {
         }
       });
     });
-    
+
     // Set timeout for long-running analysis
     setTimeout(() => {
-      if (!pythonProcess.killed) {
-        pythonProcess.kill();
-        res.status(408).json({
+      if (!responded) {
+        responded = true;
+        if (!pythonProcess.killed) pythonProcess.kill();
+        return res.status(408).json({
           success: false,
           error: 'Hotspot analysis timed out',
           details: 'Analysis took longer than 5 minutes'
         });
       }
     }, 300000); // 5 minutes timeout
-    
+
   } catch (error) {
-    console.error('Error in hotspot analysis endpoint:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error during hotspot analysis',
-      details: error.message
-    });
+    if (!responded) {
+      responded = true;
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error during hotspot analysis',
+        details: error.message
+      });
+    }
   }
 });
 
@@ -175,11 +170,11 @@ router.post('/hotspot-analysis', async (req, res) => {
 router.get('/hotspot-results', (req, res) => {
   try {
     const outputPath = path.join(__dirname, '..', 'hotspot_analysis_results.csv');
-    
+
     if (fs.existsSync(outputPath)) {
       const csvData = fs.readFileSync(outputPath, 'utf8');
       const stats = fs.statSync(outputPath);
-      
+
       res.json({
         success: true,
         data: csvData,
@@ -195,7 +190,6 @@ router.get('/hotspot-results', (req, res) => {
       });
     }
   } catch (error) {
-    console.error('Error retrieving hotspot results:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve hotspot results',
@@ -209,7 +203,7 @@ router.get('/hotspot-status', (req, res) => {
   try {
     const outputPath = path.join(__dirname, '..', 'hotspot_analysis_results.csv');
     const inputPath = path.join(__dirname, '..', 'ps_removed_dt.csv');
-    
+
     const status = {
       hasInputData: fs.existsSync(inputPath),
       hasResults: fs.existsSync(outputPath),
@@ -217,24 +211,23 @@ router.get('/hotspot-status', (req, res) => {
       inputFileSize: null,
       resultFileSize: null
     };
-    
+
     if (status.hasInputData) {
       const inputStats = fs.statSync(inputPath);
       status.inputFileSize = inputStats.size;
     }
-    
+
     if (status.hasResults) {
       const outputStats = fs.statSync(outputPath);
       status.lastAnalysis = outputStats.mtime;
       status.resultFileSize = outputStats.size;
     }
-    
+
     res.json({
       success: true,
       status: status
     });
   } catch (error) {
-    console.error('Error checking hotspot status:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to check hotspot status',

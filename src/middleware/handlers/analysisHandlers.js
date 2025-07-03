@@ -122,9 +122,9 @@ export const handleLoadHotspotData = async (store) => {
                 columns: { lat: 'latitude', lng: 'longitude' },
                 isVisible: true, // Start as visible
                 visConfig: {
-                  opacity: 0.5,
+                  opacity: 0.6,
                   colorRange: {
-                    colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300'] //colors apply
+                    colors: ['#00939C', '#8BC6C9', '#E6FAFA', '#EB9373', '#C22E00'] //colors apply
                   },
                   radius: 75,
                   intensity: 1,
