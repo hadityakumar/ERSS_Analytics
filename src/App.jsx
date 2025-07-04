@@ -301,7 +301,15 @@ const App = () => {
                   background: '#fff',
                   borderRadius: 8,
                 }}
-              />
+              >
+                {/* MDT Allocation Page */}
+                <div style={{ padding: '200px', display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center', alignItems: 'center' }}>
+                  <h2 style={{ margin: 0, fontSize: '35px', color: '#333' }}>MDT Allocation</h2>
+                  <p style={{ fontSize: '22px', color: '#666' }}>
+                    This page will display the allocation of Mobile Data Terminals (MDTs)
+                  </p>
+                </div>
+              </div>
 
               {/* PAGE 3 */}
               <div
