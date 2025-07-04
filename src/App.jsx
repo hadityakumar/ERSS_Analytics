@@ -79,6 +79,34 @@ const SidebarSeparator = () => (
   />
 );
 
+const CollapseButton = ({ isCollapsed, onClick }) => (
+  <button
+    onClick={onClick}
+    style={{
+      position: 'absolute',
+      top: '10px',
+      right: '10px',
+      background: 'black',
+      color: 'white',
+      border: 'none',
+      borderRadius: '4px',
+      width: '30px',
+      height: '30px',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '16px',
+      zIndex: 10,
+      transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+    }}
+    title={isCollapsed ? 'Expand Control Panel' : 'Collapse Control Panel'}
+  >
+    {isCollapsed ? '▼' : '▲'}
+  </button>
+);
+
 const App = () => {
   const dispatch = useDispatch();
   const [selectedMainTypes, setSelectedMainTypes] = useState(['All Types']);
@@ -90,6 +118,7 @@ const App = () => {
   const [selectedDistrict, setSelectedDistrict] = useState('All Districts');
   const [selectedTemporalTrend, setSelectedTemporalTrend] = useState('Hourly');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isControlPanelCollapsed, setIsControlPanelCollapsed] = useState(false);
 
   useMapStyles();
 
@@ -221,27 +250,86 @@ const App = () => {
                   minHeight: 0,
                 }}
               >
-                <ControlPanel
-                  selectedMainTypes={selectedMainTypes}
-                  setSelectedMainTypes={setSelectedMainTypes}
-                  selectedSubtypes={selectedSubtypes}
-                  setSelectedSubtypes={setSelectedSubtypes}
-                  selectedSeverities={selectedSeverities}
-                  setSelectedSeverities={setSelectedSeverities}
-                  selectedPartOfDay={selectedPartOfDay}
-                  setSelectedPartOfDay={setSelectedPartOfDay}
-                  selectedCityLocation={selectedCityLocation}
-                  selectedDateRange={selectedDateRange}
-                  setSelectedDateRange={setSelectedDateRange}
-                  selectedDistrict={selectedDistrict}
-                  setSelectedDistrict={setSelectedDistrict}
-                  selectedTemporalTrend={selectedTemporalTrend}
-                  setSelectedTemporalTrend={setSelectedTemporalTrend}
-                />
+                {/* Collapsible Control Panel */}
+                <div
+                  style={{
+                    maxHeight: isControlPanelCollapsed ? '50px' : '300px',
+                    overflow: 'hidden',
+                    transition: 'max-height 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                    position: 'relative',
+                  }}
+                >
+                  <ContentPanel
+                    style={{
+                      position: 'relative',
+                      minHeight: '50px',
+                      transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                      opacity: 1,
+                    }}
+                  >
+                    <CollapseButton
+                      isCollapsed={isControlPanelCollapsed}
+                      onClick={() => setIsControlPanelCollapsed(!isControlPanelCollapsed)}
+                    />
+                    <div
+                      style={{
+                        opacity: isControlPanelCollapsed ? 1 : 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '50px',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        color: 'black',
+                        transition: 'opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        position: isControlPanelCollapsed ? 'static' : 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        zIndex: 5,
+                      }}
+                    >
+                      Control Panel
+                    </div>
+                    <div
+                      style={{
+                        opacity: isControlPanelCollapsed ? 0 : 1,
+                        transition: 'opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        pointerEvents: isControlPanelCollapsed ? 'none' : 'auto',
+                      }}
+                    >
+                      <ControlPanel
+                        selectedMainTypes={selectedMainTypes}
+                        setSelectedMainTypes={setSelectedMainTypes}
+                        selectedSubtypes={selectedSubtypes}
+                        setSelectedSubtypes={setSelectedSubtypes}
+                        selectedSeverities={selectedSeverities}
+                        setSelectedSeverities={setSelectedSeverities}
+                        selectedPartOfDay={selectedPartOfDay}
+                        setSelectedPartOfDay={setSelectedPartOfDay}
+                        selectedCityLocation={selectedCityLocation}
+                        selectedDateRange={selectedDateRange}
+                        setSelectedDateRange={setSelectedDateRange}
+                        selectedDistrict={selectedDistrict}
+                        setSelectedDistrict={setSelectedDistrict}
+                        selectedTemporalTrend={selectedTemporalTrend}
+                        setSelectedTemporalTrend={setSelectedTemporalTrend}
+                      />
+                    </div>
+                  </ContentPanel>
+                </div>
 
                 <div style={{ display: 'flex', flex: 1, gap: '10px', minHeight: 0 }}>
                   {/* Chart Column */}
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div 
+                    style={{ 
+                      flex: isControlPanelCollapsed ? '0 0 40%' : 1, 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: '10px',
+                      transition: 'flex 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
+                  >
                     <ContentPanel style={{ flex: 1, overflow: 'hidden' }}>
                       <ChartPanel {...chartProps} />
                     </ContentPanel>
@@ -259,7 +347,15 @@ const App = () => {
                   </div>
 
                   {/* Map Column */}
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div 
+                    style={{ 
+                      flex: isControlPanelCollapsed ? '0 0 60%' : 1, 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: '10px',
+                      transition: 'flex 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
+                  >
                     <ContentPanel style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
                       <div
                         style={{
@@ -343,3 +439,5 @@ const App = () => {
 };
 
 export default App;
+
+
