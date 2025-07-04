@@ -203,7 +203,7 @@ const EmergingHotspotsButton = () => {
             <div style={spinnerStyle} />
           </>
         ) : (
-          'EMERGING'
+          'Emerging Hotspots'
         )}
       </button>
     </>

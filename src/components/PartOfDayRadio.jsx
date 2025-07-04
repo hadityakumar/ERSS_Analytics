@@ -14,96 +14,58 @@ const PartOfDayRadio = ({ selectedMainTypes, selectedSubtypes, selectedSeveritie
 
   const datasetInfo = useMemo(() => {
     if (!datasets || Object.keys(datasets).length === 0) return null;
-    
     const datasetId = Object.keys(datasets)[0];
     const dataset = datasets[datasetId];
-    
     return {
-      datasetId,
-      fieldIndex: dataset.fields?.findIndex(f => f.name === PART_OF_DAY_FIELD_NAME),
-      mainTypeFieldIndex: dataset.fields?.findIndex(f => f.name === MAIN_TYPE_FIELD_NAME),
-      subtypeFieldIndex: dataset.fields?.findIndex(f => f.name === SUBTYPE_FIELD_NAME),
-      severityFieldIndex: dataset.fields?.findIndex(f => f.name === SEVERITY_FIELD_NAME),
-      totalCount: dataset.dataContainer?._rows?.length || 0,
-      dataset
+      dataset,
     };
   }, [datasets]);
 
-  // Reset selected part of day when any other filter changes
   useEffect(() => {
     setSelectedPartOfDay(['All Times']);
     onSelectionChange?.(['All Times']);
   }, [selectedMainTypes, selectedSubtypes, selectedSeverities, onSelectionChange]);
 
-  // Calculate part of day counts based on current filter selections
   const partOfDayCounts = useMemo(() => {
-    if (!datasetInfo || datasetInfo.fieldIndex === -1) return {};
-    
     const counts = {};
-    PART_OF_DAY_CATEGORIES.forEach(partOfDay => {
-      counts[partOfDay] = 0;
-    });
+    PART_OF_DAY_CATEGORIES.forEach(time => (counts[time] = 0));
+    if (!datasetInfo?.dataset?.getValue) return counts;
 
-    if (datasetInfo.dataset?.getValue) {
-      for (let i = 0; i < datasetInfo.dataset.length; i++) {
-        const partOfDayValue = datasetInfo.dataset.getValue(PART_OF_DAY_FIELD_NAME, i);
-        const mainTypeValue = datasetInfo.dataset.getValue(MAIN_TYPE_FIELD_NAME, i);
-        const subtypeValue = datasetInfo.dataset.getValue(SUBTYPE_FIELD_NAME, i);
-        const severityValue = datasetInfo.dataset.getValue(SEVERITY_FIELD_NAME, i);
-        
-        // Check if this row matches the current main type filter
-        let matchesMainType = true;
-        if (selectedMainTypes && !selectedMainTypes.includes('All Types')) {
-          matchesMainType = selectedMainTypes.includes(mainTypeValue);
-        }
-        
-        // Check if this row matches the current subtype filter
-        let matchesSubtype = true;
-        if (selectedSubtypes && !selectedSubtypes.includes('All Subtypes')) {
-          matchesSubtype = selectedSubtypes.includes(subtypeValue);
-        }
-        
-        // Check if this row matches the current severity filter
-        let matchesSeverity = true;
-        if (selectedSeverities && !selectedSeverities.includes('All Levels')) {
-          matchesSeverity = selectedSeverities.includes(severityValue);
-        }
-        
-        // Only count if it matches all filters and is a valid part of day category
-        if (matchesMainType && matchesSubtype && matchesSeverity && PART_OF_DAY_CATEGORIES.includes(partOfDayValue)) {
-          counts[partOfDayValue]++;
-        }
+    for (let i = 0; i < datasetInfo.dataset.length; i++) {
+      const partOfDayValue = datasetInfo.dataset.getValue(PART_OF_DAY_FIELD_NAME, i);
+      const mainType = datasetInfo.dataset.getValue(MAIN_TYPE_FIELD_NAME, i);
+      const subtype = datasetInfo.dataset.getValue(SUBTYPE_FIELD_NAME, i);
+      const severity = datasetInfo.dataset.getValue(SEVERITY_FIELD_NAME, i);
+
+      const matchesMainType = selectedMainTypes.includes('All Types') || selectedMainTypes.includes(mainType);
+      const matchesSubtype = selectedSubtypes.includes('All Subtypes') || selectedSubtypes.includes(subtype);
+      const matchesSeverity = selectedSeverities.includes('All Levels') || selectedSeverities.includes(severity);
+
+      if (matchesMainType && matchesSubtype && matchesSeverity && PART_OF_DAY_CATEGORIES.includes(partOfDayValue)) {
+        counts[partOfDayValue]++;
       }
     }
-    
     return counts;
   }, [datasetInfo, selectedMainTypes, selectedSubtypes, selectedSeverities]);
 
-  const handlePartOfDayChange = useCallback((partOfDay) => {
-    let newSelectedPartOfDay;
-    
-    if (partOfDay === 'All Times') {
-      newSelectedPartOfDay = ['All Times'];
+  const totalCount = Object.values(partOfDayCounts).reduce((a, b) => a + b, 0);
+
+  const handleChange = useCallback((value) => {
+    let newSelection;
+    if (value === 'All Times') {
+      newSelection = ['All Times'];
     } else {
       if (selectedPartOfDay.includes('All Times')) {
-        // If "All Times" was selected, replace it with the specific time
-        newSelectedPartOfDay = [partOfDay];
-      } else if (selectedPartOfDay.includes(partOfDay)) {
-        // If time is already selected, remove it
-        newSelectedPartOfDay = selectedPartOfDay.filter(p => p !== partOfDay);
-        
-        // If no times are selected, default to "All Times"
-        if (newSelectedPartOfDay.length === 0) {
-          newSelectedPartOfDay = ['All Times'];
-        }
+        newSelection = [value];
+      } else if (selectedPartOfDay.includes(value)) {
+        newSelection = selectedPartOfDay.filter(v => v !== value);
+        if (newSelection.length === 0) newSelection = ['All Times'];
       } else {
-        // Add the time to the selection
-        newSelectedPartOfDay = [...selectedPartOfDay, partOfDay];
+        newSelection = [...selectedPartOfDay, value];
       }
     }
-    
-    setSelectedPartOfDay(newSelectedPartOfDay);
-    onSelectionChange?.(newSelectedPartOfDay);
+    setSelectedPartOfDay(newSelection);
+    onSelectionChange?.(newSelection);
   }, [selectedPartOfDay, onSelectionChange]);
 
   if (!datasetInfo) {
@@ -123,10 +85,6 @@ const PartOfDayRadio = ({ selectedMainTypes, selectedSubtypes, selectedSeveritie
     );
   }
 
-  const totalCount = PART_OF_DAY_CATEGORIES.reduce((sum, partOfDay) => 
-    sum + (partOfDayCounts[partOfDay] || 0), 0
-  );
-
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
       <h4 style={{
@@ -138,74 +96,89 @@ const PartOfDayRadio = ({ selectedMainTypes, selectedSubtypes, selectedSeveritie
       }}>
         Part of Day:
       </h4>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        {/* All Times option */}
-        <label 
-          style={{ 
-            display: 'flex', 
-            alignItems: 'center',
-            cursor: 'pointer',
-            fontSize: '11px',
-            color: '#333'
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 70px',
+          gridTemplateRows: 'repeat(2, 1fr) repeat(2, 1fr)',
+          gap: '3px 12px',
+          minWidth: '240px',
+          alignItems: 'center',
+          justifyItems: 'start'
+        }}
+      >
+        {/* Row 1 & 2 */}
+        <PartOfDayButton
+          checked={selectedPartOfDay.includes('MORNING')}
+          label={`Morning (${partOfDayCounts['MORNING'] || 0})`}
+          onClick={() => handleChange('MORNING')}
+        />
+        <PartOfDayButton
+          checked={selectedPartOfDay.includes('AFTERNOON')}
+          label={`Afternoon (${partOfDayCounts['AFTERNOON'] || 0})`}
+          onClick={() => handleChange('AFTERNOON')}
+        />
+        <PartOfDayButton
+          checked={selectedPartOfDay.includes('EVENING')}
+          label={`Evening (${partOfDayCounts['EVENING'] || 0})`}
+          onClick={() => handleChange('EVENING')}
+        />
+        <PartOfDayButton
+          checked={selectedPartOfDay.includes('NIGHT')}
+          label={`Night (${partOfDayCounts['NIGHT'] || 0})`}
+          onClick={() => handleChange('NIGHT')}
+        />
+
+        {/* All Times — spans vertically in 2nd column */}
+        <PartOfDayButton
+          checked={selectedPartOfDay.includes('All Times')}
+          label={`All (${totalCount})`}
+          onClick={() => handleChange('All Times')}
+          style={{
+            gridRow: '1 / span 4',
+            gridColumn: 2,
+            justifySelf: 'center'
           }}
-          onClick={() => handlePartOfDayChange('All Times')}
-        >
-          <div style={{
-            width: '14px',
-            height: '14px',
-            border: '1px solid #000',
-            borderRadius: '2px',
-            marginRight: '6px',
-            backgroundColor: selectedPartOfDay.includes('All Times') ? '#28a745' : '#fff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            {selectedPartOfDay.includes('All Times') && (
-              <span style={{ color: '#fff', fontSize: '10px', lineHeight: 1 }}>✓</span>
-            )}
-          </div>
-          <span>
-            All Times ({totalCount})
-          </span>
-        </label>
-        
-        {/* Individual time periods */}
-        {PART_OF_DAY_CATEGORIES.map((partOfDay) => (
-          <label 
-            key={partOfDay} 
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center',
-              cursor: 'pointer',
-              fontSize: '11px',
-              color: '#333'
-            }}
-            onClick={() => handlePartOfDayChange(partOfDay)}
-          >
-            <div style={{
-              width: '14px',
-              height: '14px',
-              border: '1px solid #000',
-              borderRadius: '2px',
-              marginRight: '6px',
-              backgroundColor: selectedPartOfDay.includes(partOfDay) ? '#28a745' : '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              {selectedPartOfDay.includes(partOfDay) && (
-                <span style={{ color: '#fff', fontSize: '10px', lineHeight: 1 }}>✓</span>
-              )}
-            </div>
-            <span>
-              {partOfDay} ({partOfDayCounts[partOfDay] || 0})
-            </span>
-          </label>
-        ))}
+        />
       </div>
     </div>
   );
 };
+
+const PartOfDayButton = ({ checked, label, onClick, style = {} }) => (
+  <label
+    style={{
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      cursor: 'pointer',
+      fontSize: '11px',
+      color: '#333',
+      userSelect: 'none',
+      gap: '7px',
+      ...style
+    }}
+    onClick={onClick}
+  >
+    <span style={{
+      width: 20,
+      height: 20,
+      minWidth: 20,
+      minHeight: 20,
+      border: checked ? 'none' : '2px solid #000',
+      borderRadius: '3px',
+      background: checked ? '#28a745' : '#fff',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontWeight: 'bold',
+      fontSize: '14px',
+      transition: 'background 0.15s, border 0.15s'
+    }}>
+      {checked && <span style={{ color: '#fff', fontSize: '14px', lineHeight: 1 }}>✓</span>}
+    </span>
+    <span>{label}</span>
+  </label>
+);
 
 export default PartOfDayRadio;

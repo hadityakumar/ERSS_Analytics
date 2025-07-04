@@ -2,12 +2,12 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addFilter, setFilter, removeFilter } from '@kepler.gl/actions';
 import crimeTypesData from '../data/crimeTypes.json';
+import Dropdown from './Dropdown';
 
 const FILTER_FIELD_NAME = 'ahp_weighted_event_types_main_type';
 
 const FilterDropdown = ({ onSelectionChange }) => {
   const dispatch = useDispatch();
-  const [isOpen, setIsOpen] = useState(false);
   const [selectedTypes, setSelectedTypes] = useState(['All Types']);
 
   const datasets = useSelector(state => state.keplerGl?.map?.visState?.datasets);
@@ -15,10 +15,8 @@ const FilterDropdown = ({ onSelectionChange }) => {
 
   const datasetInfo = useMemo(() => {
     if (!datasets || Object.keys(datasets).length === 0) return null;
-    
     const datasetId = Object.keys(datasets)[0];
     const dataset = datasets[datasetId];
-    
     return {
       datasetId,
       fieldIndex: dataset.fields?.findIndex(f => f.name === FILTER_FIELD_NAME),
@@ -29,7 +27,6 @@ const FilterDropdown = ({ onSelectionChange }) => {
 
   const typeCounts = useMemo(() => {
     if (!datasetInfo || datasetInfo.fieldIndex === -1) return {};
-    
     const counts = {};
     crimeTypesData.crimeTypes.forEach(type => {
       let count = 0;
@@ -43,7 +40,7 @@ const FilterDropdown = ({ onSelectionChange }) => {
     return counts;
   }, [datasetInfo]);
 
-  const clearAllFilters = useCallback(() => {
+  const reduxClearAllFilters = useCallback(() => {
     const currentFilters = reduxFilters || [];
     for (let i = currentFilters.length - 1; i >= 0; i--) {
       dispatch(removeFilter(i, 'map'));
@@ -52,12 +49,9 @@ const FilterDropdown = ({ onSelectionChange }) => {
 
   const createFilter = useCallback((filterValues) => {
     if (!datasetInfo || datasetInfo.fieldIndex === -1 || !filterValues.length) return;
-    
-    clearAllFilters();
-    
+    reduxClearAllFilters();
     setTimeout(() => {
       dispatch(addFilter(datasetInfo.datasetId, 'map'));
-      
       setTimeout(() => {
         dispatch(setFilter(0, 'fieldIdx', [datasetInfo.fieldIndex], 'map'));
         dispatch(setFilter(0, 'name', [FILTER_FIELD_NAME], 'map'));
@@ -66,24 +60,22 @@ const FilterDropdown = ({ onSelectionChange }) => {
         dispatch(setFilter(0, 'enabled', true, 'map'));
       }, 100);
     }, 200);
-  }, [datasetInfo, dispatch, clearAllFilters]);
+  }, [datasetInfo, dispatch, reduxClearAllFilters]);
 
   const handleTypeSelect = useCallback((type) => {
     let newSelectedTypes;
-    
     if (type === 'All Types') {
       newSelectedTypes = ['All Types'];
-      clearAllFilters();
+      reduxClearAllFilters();
     } else {
       if (selectedTypes.includes('All Types')) {
         newSelectedTypes = [type];
-        createFilter([type]); 
+        createFilter([type]);
       } else if (selectedTypes.includes(type)) {
         newSelectedTypes = selectedTypes.filter(t => t !== type);
-        
         if (newSelectedTypes.length === 0) {
           newSelectedTypes = ['All Types'];
-          clearAllFilters();
+          reduxClearAllFilters();
         } else {
           createFilter(newSelectedTypes);
         }
@@ -92,23 +84,23 @@ const FilterDropdown = ({ onSelectionChange }) => {
         createFilter(newSelectedTypes);
       }
     }
-    
     setSelectedTypes(newSelectedTypes);
     onSelectionChange?.(newSelectedTypes);
-  }, [selectedTypes, clearAllFilters, createFilter, onSelectionChange]);
+  }, [selectedTypes, reduxClearAllFilters, createFilter, onSelectionChange]);
 
   const handleClearSelection = useCallback(() => {
     setSelectedTypes(['All Types']);
-    clearAllFilters();
+    reduxClearAllFilters();
     onSelectionChange?.(['All Types']);
-  }, [clearAllFilters, onSelectionChange]);
+  }, [reduxClearAllFilters, onSelectionChange]);
 
-  const getDisplayText = () => {
-    if (selectedTypes.includes('All Types')) return 'All Types';
-    if (selectedTypes.length === 1) return selectedTypes[0];
-    if (selectedTypes.length <= 3) return selectedTypes.join(', ');
-    return `${selectedTypes.length} types selected`;
-  };
+  const options = [
+    { value: 'All Types', label: `All Types (${datasetInfo?.totalCount || 0})` },
+    ...crimeTypesData.crimeTypes.map(type => ({
+      value: type,
+      label: `${type} (${typeCounts[type] || 0})`
+    }))
+  ];
 
   if (!datasetInfo) {
     return (
@@ -121,7 +113,7 @@ const FilterDropdown = ({ onSelectionChange }) => {
           width: '80px',
           flexShrink: 0
         }}>
-          Main Types:
+          Event Main-Types
         </h4>
         <div style={{ fontSize: '11px', color: '#666', flex: '1' }}>Loading...</div>
       </div>
@@ -138,131 +130,25 @@ const FilterDropdown = ({ onSelectionChange }) => {
         width: '80px',
         flexShrink: 0
       }}>
-        Main Types:
+        Event Main Types
       </h4>
-      
-      <div style={{ position: 'relative', flex: '1', width: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          {/* Main dropdown container - Fixed width */}
-          <div style={{
-            width: 'calc(100% - 28px)', // Fixed width minus clear button and gap
-            display: 'flex',
-            backgroundColor: '#fff',
-            border: '1px solid #000',
-            borderRadius: '3px'
-          }}>
-            {/* Display text area */}
-            <div style={{
-              flex: '1',
-              padding: '6px 8px',
-              fontSize: '12px',
-              color: '#333',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              minWidth: 0
-            }}>
-              {getDisplayText()}
-            </div>
-            
-            {/* Dropdown button */}
-            <button onClick={() => setIsOpen(!isOpen)} style={{
-              padding: '6px 8px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '12px',
-              color: '#333',
-              flexShrink: 0
-            }}>
-              <span style={{ 
-                transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                transition: 'transform 0.2s ease',
-                display: 'inline-block'
-              }}>▼</span>
-            </button>
-          </div>
-
-          {/* Clear button (X) - Fixed position */}
-          <button 
-            onClick={handleClearSelection}
-            style={{
-              marginLeft: '4px',
-              width: '24px',
-              height: '24px',
-              backgroundColor: '#000',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '3px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
-            }}
-            title="Clear selection"
-          >
-            ×
-          </button>
-        </div>
-
-        {isOpen && (
-          <div style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            backgroundColor: '#fff',
-            border: '1px solid #000',
-            borderRadius: '3px',
-            maxHeight: '200px',
-            overflowY: 'auto',
-            zIndex: 1001,
-            marginTop: '2px'
-          }}>
-            <div
-              style={{
-                padding: '6px 8px',
-                cursor: 'pointer',
-                fontSize: '12px',
-                borderBottom: '1px solid #ddd',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                backgroundColor: selectedTypes.includes('All Types') ? '#f0f0f0' : 'transparent'
-              }}
-              onClick={() => handleTypeSelect('All Types')}
-            >
-              <span>All Types ({datasetInfo.totalCount})</span>
-              {selectedTypes.includes('All Types') && (
-                <span style={{ color: '#28a745', fontWeight: 'bold' }}>✓</span>
-              )}
-            </div>
-            {crimeTypesData.crimeTypes.map((type, index) => (
-              <div
-                key={type}
-                style={{
-                  padding: '6px 8px',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  borderBottom: index === crimeTypesData.crimeTypes.length - 1 ? 'none' : '1px solid #ddd',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  backgroundColor: selectedTypes.includes(type) ? '#f0f0f0' : 'transparent'
-                }}
-                onClick={() => handleTypeSelect(type)}
-              >
-                <span>{type} ({typeCounts[type] || 0})</span>
-                {selectedTypes.includes(type) && (
-                  <span style={{ color: '#28a745', fontWeight: 'bold' }}>✓</span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}        
-      </div>
+      <Dropdown
+        options={options}
+        selected={selectedTypes}
+        onSelect={handleTypeSelect}
+        clearable={true}
+        onClear={handleClearSelection}
+        placeholder="All Types"
+        width="100%"
+        renderSelected={(selected) => {
+          if (!selected || selected.includes('All Types')) return 'All Types';
+          if (selected.length === 1) return selected[0];
+          if (selected.length <= 3) return selected.join(', ');
+          return `${selected.length} types selected`;
+        }}
+        renderOption={option => option.label}
+        disabled={false}
+      />
     </div>
   );
 };

@@ -203,7 +203,7 @@ const HotspotButton = () => {
             <div style={spinnerStyle} />
           </>
         ) : (
-          'HOT'
+          'Hotspot'
         )}
       </button>
     </>

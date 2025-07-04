@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setDateFilter } from '../store';
 
 export const DATE_FIELD_NAME = 'signal_lan';
 
@@ -13,7 +12,6 @@ export default function DateRangeSelector({ onDateRangeChange }) {
   const [toDate, setToDate] = useState(endDate ? endDate.split(' ')[0] : '');
   const [toTime, setToTime] = useState(endDate ? endDate.split(' ')[1] || '23:59' : '23:59');
 
-  // Notify parent component when date range changes
   useEffect(() => {
     const dateRange = {
       fromDate,
@@ -25,154 +23,201 @@ export default function DateRangeSelector({ onDateRangeChange }) {
     onDateRangeChange?.(dateRange);
   }, [fromDate, fromTime, toDate, toTime, onDateRangeChange]);
 
-  const clearFromFields = useCallback(() => {
-    setFromDate('');
-    setFromTime('00:00');
-  }, []);
-
-  const clearToFields = useCallback(() => {
-    setToDate('');
-    setToTime('23:59');
-  }, []);
+  const clearFromDate = useCallback(() => setFromDate(''), []);
+  const clearFromTime = useCallback(() => setFromTime('00:00'), []);
+  const clearToDate = useCallback(() => setToDate(''), []);
+  const clearToTime = useCallback(() => setToTime('23:59'), []);
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '8px',
-      width: '100%'
-    }}>
-      {/* From Date and Time */}
-      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-        <label style={{ fontSize: '11px', color: '#333', minWidth: '30px', fontWeight: '500' }}>
-          From:
-        </label>
-        <input 
-          type="date" 
-          value={fromDate} 
-          onChange={e => setFromDate(e.target.value)}
-          style={{
-            flex: 1,
-            padding: '2px 6px',
-            border: '1px solid #000',
-            borderRadius: '3px',
-            fontSize: '11px',
-            backgroundColor: '#fff',
-            color: '#000',
-            height: '24px',
-            width: '52px'
-          }}
-        />
-        <input 
-          type="time" 
-          value={fromTime} 
-          onChange={e => setFromTime(e.target.value)}
-          style={{
-            padding: '4px 6px',
-            border: '1px solid #000',
-            borderRadius: '3px',
-            fontSize: '11px',
-            backgroundColor: '#fff',
-            color: '#000',
-            width: '70px',
-            height: '24px'
-          }}
-        />
-        {/* Clear from fields button */}
-        <button
-          onClick={clearFromFields}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '2px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '16px',
-            height: '16px',
-            borderRadius: '2px'
-          }}
-          onMouseOver={(e) => {
-            e.target.style.backgroundColor = '#f0f0f0';
-          }}
-          onMouseOut={(e) => {
-            e.target.style.backgroundColor = 'transparent';
-          }}
-          title="Clear from date and time"
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
+    <>
+      <style>{`
+        .drs-label {
+          font-size: 12px;
+          color: #222;
+          font-weight: 600;
+          margin-bottom: 2px;
+          letter-spacing: 0.01em;
+          text-align: left;
+          margin-left: 5px;
+        }
+        .drs-group {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          width: 100%;
+          margin-bottom: 0px;
+        }
+        .drs-row {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          width: 100%;
+          justify-content: flex-end;
+        }
+        .drs-input-wrap {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          position: relative;
+        }
+        .drs-input {
+          font-size: 12px;
+          padding: 7px 10px 7px 8px;
+          border: 2px solid #000;
+          border-radius: 0;
+          background: transparent;
+          color: #111;
+          outline: none;
+          transition: border 0.16s;
+          appearance: none;
+          text-align: right;
+        }
+        .drs-input:focus {
+          border: 2.5px solid #111;
+        }
+        .drs-input.date {
+          width: 120px;
+          min-width: 90px;
+          max-width: 140px;
+        }
+        .drs-input.time {
+          width: 100px;
+          min-width: 60px;
+          max-width: 90px;
+        }
+        .drs-clear-btn {
+          margin-left: 8px;
+          background: transparent;
+          color: #222;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          border: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 17px;
+          opacity: 0.85;
+          transition: background 0.15s;
+          box-shadow: none;
+          padding: 0;
+        }
+        .drs-clear-btn img {
+          width: 16px;
+          height: 16px;
+          display: block;
+          transition: filter 0.18s;
+          filter: brightness(0.7);
+        }
+        .drs-clear-btn:hover img,
+        .drs-clear-btn:active img,
+        .drs-clear-btn:focus-visible img {
+          filter: brightness(0.15);
+        }
+        
+        
+      `}</style>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', width: '100%' }}>
+        {/* From */}
+        <div className="drs-group">
+          <div className="drs-label">From</div>
+          <div className="drs-row">
+            <div className="drs-input-wrap">
+              <input
+                className="drs-input date"
+                type="date"
+                value={fromDate}
+                onChange={e => setFromDate(e.target.value)}
+                placeholder="YYYY-MM-DD"
+                autoComplete="off"
+              />
+              <button
+                className="drs-clear-btn"
+                onClick={clearFromDate}
+                tabIndex={0}
+                aria-label="Clear from date"
+                type="button"
+                title="Clear from date"
+                style={{ opacity: fromDate ? 1 : 0.5 }}
+              >
+                <img src="cross_button.svg" alt="Clear" />
+              </button>
+            </div>
+          </div>
+          <div className="drs-row">
+            <div className="drs-input-wrap">
+              <input
+                className="drs-input time"
+                type="time"
+                value={fromTime}
+                onChange={e => setFromTime(e.target.value)}
+                autoComplete="off"
+              />
+              <button
+                className="drs-clear-btn"
+                onClick={clearFromTime}
+                tabIndex={0}
+                aria-label="Clear from time"
+                type="button"
+                title="Clear from time"
+                style={{ opacity: fromTime && fromTime !== '00:00' ? 1 : 0.5 }}
+              >
+                <img src="cross_button.svg" alt="Clear" />
+              </button>
+            </div>
+          </div>
+        </div>
+        {/* To */}
+        <div className="drs-group">
+          <div className="drs-label">To</div>
+          <div className="drs-row">
+            <div className="drs-input-wrap">
+              <input
+                className="drs-input date"
+                type="date"
+                value={toDate}
+                onChange={e => setToDate(e.target.value)}
+                placeholder="YYYY-MM-DD"
+                autoComplete="off"
+              />
+              <button
+                className="drs-clear-btn"
+                onClick={clearToDate}
+                tabIndex={0}
+                aria-label="Clear to date"
+                type="button"
+                title="Clear to date"
+                style={{ opacity: toDate ? 1 : 0.5 }}
+              >
+                <img src="cross_button.svg" alt="Clear" />
+              </button>
+            </div>
+          </div>
+          <div className="drs-row">
+            <div className="drs-input-wrap">
+              <input
+                className="drs-input time"
+                type="time"
+                value={toTime}
+                onChange={e => setToTime(e.target.value)}
+                autoComplete="off"
+              />
+              <button
+                className="drs-clear-btn"
+                onClick={clearToTime}
+                tabIndex={0}
+                aria-label="Clear to time"
+                type="button"
+                title="Clear to time"
+                style={{ opacity: toTime && toTime !== '23:59' ? 1 : 0.5 }}
+              >
+                <img src="cross_button.svg" alt="Clear" />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-
-      {/* To Date and Time */}
-      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-        <label style={{ fontSize: '11px', color: '#333', minWidth: '30px', fontWeight: '500' }}>
-          To:
-        </label>
-        <input 
-          type="date" 
-          value={toDate} 
-          onChange={e => setToDate(e.target.value)}
-          style={{
-            flex: 1,
-            padding: '4px 6px',
-            border: '1px solid #000',
-            borderRadius: '3px',
-            fontSize: '11px',
-            backgroundColor: '#fff',
-            color: '#000',
-            height: '24px',
-            width: '52px'
-          }}
-        />
-        <input 
-          type="time" 
-          value={toTime} 
-          onChange={e => setToTime(e.target.value)}
-          style={{
-            padding: '4px 6px',
-            border: '1px solid #000',
-            borderRadius: '3px',
-            fontSize: '11px',
-            backgroundColor: '#fff',
-            color: '#000',
-            width: '70px',
-            height: '24px'
-          }}
-        />
-        {/* Clear to fields button */}
-        <button
-          onClick={clearToFields}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '2px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '16px',
-            height: '16px',
-            borderRadius: '2px'
-          }}
-          onMouseOver={(e) => {
-            e.target.style.backgroundColor = '#f0f0f0';
-          }}
-          onMouseOut={(e) => {
-            e.target.style.backgroundColor = 'transparent';
-          }}
-          title="Clear to date and time"
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-    </div>
+    </>
   );
 }

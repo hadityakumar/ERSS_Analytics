@@ -5,6 +5,7 @@ import ToggleCrimePointsButton from './ToggleCrimePointsButton';
 import ToggleDistrictButton from './ToggleDistrictButton';
 import ToggleHotspotButton from './ToggleHotspotButton';
 import ToggleEmergingHotspotsButton from './ToggleEmergingHotspotsButton';
+import MapPanelIconButton from './MapPanelIconButton';
 
 const MapPanel = () => {
   return (
@@ -23,40 +24,47 @@ const MapPanel = () => {
       boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
       minWidth: '50px'
     }}>
-      {/* Remove absolute positioning from individual buttons */}
-      <div style={{ position: 'relative' }}>
-        <CenterButton />
-      </div>
-
-      <div style={{ position: 'relative' }}>
-        <ToggleCrimePointsButton />
-      </div>
-
-      <div style={{ position: 'relative' }}>
-        <ToggleLayerButton />
-      </div>
-      
-      <div style={{ position: 'relative' }}>
-        <ToggleDistrictButton />
+      <div><CenterButton /></div>
+      <div><ToggleCrimePointsButton /></div>
+      <div><ToggleLayerButton /></div>
+      <div><ToggleDistrictButton /></div>
+      <div><ToggleHotspotButton /></div>
+      <div><ToggleEmergingHotspotsButton /></div>
+      <div>
+        <MapPanelIconButton
+          icon="snapshot.svg"
+          alt="Snapshot"
+          title="Take Snapshot"
+          iconSize={28} // Increased icon size
+          onClick={() => { /* TODO: add functionality */ }}
+        />
       </div>
       <div>
-        <ToggleHotspotButton />
+        <MapPanelIconButton
+          icon="locate.svg"
+          alt="Locate"
+          title="Locate"
+          iconSize={28} // Increased icon size
+          onClick={() => { /* TODO: add functionality */ }}
+        />
       </div>
       <div>
-        <ToggleEmergingHotspotsButton />
+        <MapPanelIconButton
+          icon="left_arrows.svg"
+          alt="Left Arrows"
+          title="Navigate Left"
+          iconSize={28} // Increased icon size
+          onClick={() => { /* TODO: add functionality */ }}
+        />
       </div>
       <div>
-        <img src="snapshot.svg" alt="" />
-      </div>
-      <div>
-        <img src="locate.svg" alt="" />
-      </div>
-      
-        <div>
-        <img src="left_arrows.svg" alt="" />
-      </div>
-      <div>
-        <img src="map_locate.svg" alt="" />
+        <MapPanelIconButton
+          icon="map_locate.svg"
+          alt="Map Locate"
+          title="Map Locate"
+          iconSize={42} // Increased icon size
+          onClick={() => { /* TODO: add functionality */ }}
+        />
       </div>
     </div>
   );

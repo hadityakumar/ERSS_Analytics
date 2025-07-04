@@ -5,13 +5,13 @@ import { ACTION_TYPES } from '../middleware/utils/constants';
 const ToggleEmergingHotspotsButton = () => {
   const dispatch = useDispatch();
   const [isLayerVisible, setIsLayerVisible] = useState(false);
-  
+
   // Monitor Kepler.gl state for emerging hotspots layers
   const keplerState = useSelector(state => state.keplerGl?.map);
   const layers = keplerState?.visState?.layers || [];
-  
+
   // Find emerging hotspots layer
-  const emergingHotspotsLayer = layers.find(layer => 
+  const emergingHotspotsLayer = layers.find(layer =>
     layer.config?.label?.includes('Emerging Hotspots') ||
     layer.id?.includes('emerging_hotspots') ||
     (layer.config?.label?.includes('Emerging') && layer.config?.label?.includes('Hotspot'))
@@ -33,67 +33,126 @@ const ToggleEmergingHotspotsButton = () => {
     }
 
     const newVisibility = !isLayerVisible;
-    
-    // Use the layer handler action
-    dispatch({ 
-      type: ACTION_TYPES.TOGGLE_EMERGING_HOTSPOTS_VISIBILITY, 
+
+    dispatch({
+      type: ACTION_TYPES.TOGGLE_EMERGING_HOTSPOTS_VISIBILITY,
       payload: { isVisible: newVisibility }
     });
-    
+
     setIsLayerVisible(newVisibility);
   };
 
   return (
-    <button
-      onClick={handleToggleLayer}
-      disabled={!emergingHotspotsLayer}
-      style={{
-        width: '35px',
-        height: '35px',
-        backgroundColor: !emergingHotspotsLayer 
-          ? 'rgba(128, 128, 128, 0.5)' 
-          : isLayerVisible 
-            ? 'rgba(138, 43, 226, 0.9)' 
-            : 'rgba(255, 255, 255, 0.9)',
-        border: 'none',
-        borderRadius: '17.5px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-        cursor: !emergingHotspotsLayer ? 'not-allowed' : 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'all 0.2s ease',
-        backdropFilter: 'blur(4px)',
-        padding: '6px',
-        opacity: !emergingHotspotsLayer ? 0.5 : 1
-      }}
-      onMouseOver={(e) => {
-        if (emergingHotspotsLayer) {
-          e.target.style.transform = 'scale(1.05)';
-          if (!isLayerVisible) {
-            e.target.style.backgroundColor = 'rgba(186, 85, 211, 0.9)';
-          }
+    <>
+      <style>{`
+        .toggle-emerging-btn {
+          width: 30px;
+          height: 30px;
+          padding: 0;
+          background: transparent;
+          border: none;
+          border-radius: 50%;
+          outline: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          transition:
+            background 0.16s cubic-bezier(.4,0,.2,1),
+            box-shadow 0.20s cubic-bezier(.4,0,.2,1),
+            transform 0.16s cubic-bezier(.4,0,.2,1),
+            opacity 0.2s;
+          box-shadow: none;
         }
-      }}
-      onMouseOut={(e) => {
-        if (emergingHotspotsLayer) {
-          e.target.style.transform = 'scale(1)';
-          e.target.style.backgroundColor = isLayerVisible 
-            ? 'rgba(138, 43, 226, 0.9)' 
-            : 'rgba(255, 255, 255, 0.9)';
+        .toggle-emerging-btn img {
+          width: 21px;
+          height: 21px;
+          transition: filter 0.16s, transform 0.16s, opacity 0.2s;
+          filter: none;
+          pointer-events: none;
+          user-select: none;
+          display: block;
         }
-      }}
-      title={!emergingHotspotsLayer 
-        ? "No emerging hotspots layer available" 
-        : isLayerVisible 
-          ? "Hide Emerging Hotspots Layer" 
-          : "Show Emerging Hotspots Layer"
-      }
-    >
-      <img src="emerging_hotspot_button.svg" alt="" style={{
-        filter: !emergingHotspotsLayer ? 'grayscale(100%)' : 'none'
-      }} />
-    </button>
+        /* HOVER (inactive) */
+        .toggle-emerging-btn:not(.active):not(:disabled):hover,
+        .toggle-emerging-btn:not(.active):not(:disabled):focus-visible {
+          background: #111;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+          transform: scale(1.08);
+        }
+        .toggle-emerging-btn:not(.active):not(:disabled):hover img,
+        .toggle-emerging-btn:not(.active):not(:disabled):focus-visible img {
+          filter: invert(1);
+        }
+        /* ACTIVE (visible) */
+        .toggle-emerging-btn.active {
+          background: #111;
+          box-shadow: 0 0 0 2px #fff, 0 2px 8px rgba(0,0,0,0.13);
+          transform: scale(1.12);
+        }
+        .toggle-emerging-btn.active img {
+          filter: invert(1);
+        }
+        /* HOVER while ACTIVE */
+        .toggle-emerging-btn.active:hover,
+        .toggle-emerging-btn.active:focus-visible {
+          background: #111;
+          box-shadow: 0 0 0 3px #fff, 0 4px 12px rgba(0,0,0,0.18);
+          transform: scale(1.18);
+        }
+        .toggle-emerging-btn.active:hover img,
+        .toggle-emerging-btn.active:focus-visible img {
+          filter: invert(1);
+        }
+        /* DISABLED */
+        .toggle-emerging-btn:disabled,
+        .toggle-emerging-btn[disabled] {
+          background: transparent !important;
+          box-shadow: none !important;
+          cursor: not-allowed !important;
+          opacity: 0.5;
+        }
+        .toggle-emerging-btn:disabled img,
+        .toggle-emerging-btn[disabled] img {
+          filter: grayscale(1) opacity(0.5) !important;
+        }
+        /* Pressed (click) feedback */
+        .toggle-emerging-btn:active {
+          transform: scale(0.97);
+        }
+        .toggle-emerging-btn:focus {
+          outline: none;
+        }
+      `}</style>
+      <button
+        className={`toggle-emerging-btn${isLayerVisible ? ' active' : ''}`}
+        onClick={handleToggleLayer}
+        disabled={!emergingHotspotsLayer}
+        tabIndex={0}
+        aria-label={
+          !emergingHotspotsLayer
+            ? "No emerging hotspots layer available"
+            : isLayerVisible
+              ? "Hide Emerging Hotspots Layer"
+              : "Show Emerging Hotspots Layer"
+        }
+        title={
+          !emergingHotspotsLayer
+            ? "No emerging hotspots layer available"
+            : isLayerVisible
+              ? "Hide Emerging Hotspots Layer"
+              : "Show Emerging Hotspots Layer"
+        }
+        type="button"
+      >
+        <img
+          src="emerging.svg"
+          alt=""
+          draggable={false}
+        />
+      </button>
+    </>
   );
 };
 

@@ -12,8 +12,8 @@ const CHART_COLORS = [
   '#ff7f50', '#6495ed'
 ];
 
-const ChartPanel = ({ 
-  selectedDateRange, 
+const ChartPanel = ({
+  selectedDateRange,
   selectedTemporalTrend = 'Daily',
   selectedMainTypes,
   selectedSubtypes,
