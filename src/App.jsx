@@ -8,6 +8,8 @@ import './App.css';
 // Component imports
 import Header from './components/Header';
 import Footer from './components/Footer';
+import Sidebar from './components/Sidebar';
+import ContentPanel from './components/ContentPanel';
 import ControlPanel from './components/ControlPanel';
 import MapContainer from './components/MapContainer';
 import MapPanel from './components/MapPanel';
@@ -20,64 +22,6 @@ import { ToastContainer } from 'react-toastify';
 
 const HEADER_HEIGHT = 26;  // px
 const FOOTER_HEIGHT = 28;  // px
-
-const ContentPanel = ({ style, children }) => (
-  <div
-    style={{
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-      borderRadius: '5px',
-      border: '1px solid black',
-      ...style,
-    }}
-  >
-    {children}
-  </div>
-);
-
-const SidebarIconButton = ({ active, onClick, iconSrc, alt }) => (
-  <div
-    onClick={onClick}
-    style={{
-      width: '42px',
-      height: '42px',
-      margin: '0',
-      borderRadius: '20%',
-      background: active ? '#fff' : 'transparent',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      cursor: 'pointer',
-      transition: 'background 0.2s',
-      userSelect: 'none',
-    }}
-    tabIndex={0}
-    aria-label={alt}
-    role="button"
-  >
-    <img
-      src={iconSrc}
-      alt={alt}
-      style={{
-        width: '1.6rem',
-        height: '1.6rem',
-        filter: active ? 'invert(1)' : 'invert(0)',
-        transition: 'filter 0.2s',
-      }}
-      draggable={false}
-    />
-  </div>
-);
-
-const SidebarSeparator = () => (
-  <div
-    style={{
-      width: '60%',
-      height: '1px',
-      background: 'rgba(249, 249, 249, 0.25)',
-      margin: '0.5rem auto',
-    }}
-  />
-);
 
 const CollapseButton = ({ isCollapsed, onClick }) => (
   <button
@@ -195,48 +139,10 @@ const App = () => {
         >
           <div style={mainContentStyle}>
             {/* Left Sidebar */}
-            <ContentPanel
-              style={{
-                width: 'fit-content',
-                minWidth: '2%',
-                padding: 0,
-                display: 'flex',
-                backgroundColor: 'rgba(0, 0, 0, 1)',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '1px',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  width: '100%',
-                  alignItems: 'center',
-                }}
-              >
-                <SidebarIconButton
-                  active={currentPage === 1}
-                  onClick={() => setCurrentPage(1)}
-                  iconSrc="analysis.svg"
-                  alt="Analysis"
-                />
-                <SidebarSeparator />
-                <SidebarIconButton
-                  active={currentPage === 2}
-                  onClick={() => setCurrentPage(2)}
-                  iconSrc="MDT_allocation.svg"
-                  alt="MDT Allocation"
-                />
-                <SidebarSeparator />
-                <SidebarIconButton
-                  active={currentPage === 3}
-                  onClick={() => setCurrentPage(3)}
-                  iconSrc="hexagons.svg"
-                  alt="Hexagons"
-                />
-              </div>
-            </ContentPanel>
+            <Sidebar 
+              currentPage={currentPage} 
+              onPageChange={setCurrentPage} 
+            />
 
             {/* Main Area */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>

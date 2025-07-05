@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useId } from 'react';
 
 const Dropdown = ({
   options = [],
@@ -17,7 +17,38 @@ const Dropdown = ({
   clearButtonTitle = "Clear selection"
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const dropdownRef = useRef();
+  const buttonRef = useRef();
+  const uniqueId = useId(); // Generate unique ID for this dropdown instance
+
+  // Calculate dropdown position
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const buttonRect = buttonRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const dropdownHeight = Math.min(210, options.length * 40);
+      
+      const spaceBelow = viewportHeight - buttonRect.bottom - 10;
+      const spaceAbove = buttonRect.top - 10;
+      
+      let top, maxHeight;
+      if (spaceBelow >= dropdownHeight || spaceBelow >= spaceAbove) {
+        top = buttonRect.bottom + 2;
+        maxHeight = Math.min(210, spaceBelow);
+      } else {
+        top = buttonRect.top - Math.min(210, spaceAbove);
+        maxHeight = Math.min(210, spaceAbove);
+      }
+
+      setDropdownPosition({
+        top,
+        left: buttonRect.left,
+        width: buttonRect.width,
+        maxHeight
+      });
+    }
+  }, [isOpen, options.length]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -31,17 +62,32 @@ const Dropdown = ({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [isOpen]);
 
+  const handleToggle = () => {
+    if (!disabled) {
+      setIsOpen(prev => !prev);
+    }
+  };
+
+  // Create unique class names for this dropdown instance
+  const rootClass = `dropdown-root-${uniqueId.replace(/:/g, '')}`;
+  const btnClass = `dropdown-btn-${uniqueId.replace(/:/g, '')}`;
+  const arrowClass = `dropdown-arrow-${uniqueId.replace(/:/g, '')}`;
+  const clearClass = `dropdown-clear-${uniqueId.replace(/:/g, '')}`;
+  const listClass = `dropdown-list-${uniqueId.replace(/:/g, '')}`;
+  const optionClass = `dropdown-option-${uniqueId.replace(/:/g, '')}`;
+  const checkClass = `dropdown-check-${uniqueId.replace(/:/g, '')}`;
+
   return (
     <>
       <style>{`
-        .dropdown-root {
+        .${rootClass} {
           width: ${width};
           position: relative;
           font-size: 10px;
           display: flex;
           align-items: stretch;
         }
-        .dropdown-btn {
+        .${btnClass} {
           background: #fff;
           border: 2px solid #000;
           border-radius: 0;
@@ -56,20 +102,20 @@ const Dropdown = ({
           min-height: 32px;
           position: relative;
         }
-        .dropdown-btn:focus {
+        .${btnClass}:focus {
           border: 2.5px solid #111;
         }
-        .dropdown-arrow-img {
+        .${arrowClass} {
           position: absolute;
           right: 10px;
           top: 50%;
           width: 16px;
           height: 16px;
-          transform: translateY(-50%) rotate(${isOpen ? "180deg" : "0deg"});
-          transition: transform 0.18s;
+          transform: translateY(-50%) ${isOpen ? 'rotate(180deg)' : 'rotate(0deg)'};
+          transition: transform 0.3s ease-in-out;
           pointer-events: none;
         }
-        .dropdown-clear {
+        .${clearClass} {
           margin-left: 8px;
           background: transparent;
           color: #222;
@@ -81,39 +127,49 @@ const Dropdown = ({
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 17px;
+          font-size: 10px;
           opacity: 0.85;
           transition: background 0.15s;
           box-shadow: none;
           padding: 0;
         }
-        .dropdown-clear img {
+        .${clearClass} img {
           width: 16px;
           height: 16px;
           display: block;
           transition: filter 0.18s;
           filter: brightness(0.7);
         }
-        .dropdown-clear:hover img,
-        .dropdown-clear:active img,
-        .dropdown-clear:focus-visible img {
+        .${clearClass}:hover img,
+        .${clearClass}:active img,
+        .${clearClass}:focus-visible img {
           filter: brightness(0.15);
         }
-        .dropdown-list {
-          position: absolute;
-          left: 0;
-          right: 0;
-          top: 110%;
+        .${listClass} {
+          position: fixed;
           background: #fff;
           border: 2px solid #000;
           border-radius: 0;
-          box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-          z-index: 1002;
-          max-height: 210px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+          z-index: 9999;
           overflow-y: auto;
-          margin-top: 2px;
+          scrollbar-width: thin;
+          scrollbar-color: #888 #f1f1f1;
         }
-        .dropdown-option {
+        .${listClass}::-webkit-scrollbar {
+          width: 6px;
+        }
+        .${listClass}::-webkit-scrollbar-track {
+          background: #f1f1f1;
+        }
+        .${listClass}::-webkit-scrollbar-thumb {
+          background: #888;
+          border-radius: 3px;
+        }
+        .${listClass}::-webkit-scrollbar-thumb:hover {
+          background: #555;
+        }
+        .${optionClass} {
           padding: 8px 10px;
           cursor: pointer;
           color: #111;
@@ -122,67 +178,51 @@ const Dropdown = ({
           display: flex;
           align-items: center;
           justify-content: space-between;
-          font-size: 12px;
+          font-size: 10px;
           transition: background 0.13s;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
-        .dropdown-option:last-child {
+        .${optionClass}:last-child {
           border-bottom: none;
         }
-        .dropdown-option.selected,
-        .dropdown-option:hover {
+        .${optionClass}.selected,
+        .${optionClass}:hover {
           background: #111;
           color: #fff;
         }
-        .dropdown-check {
+        .${checkClass} {
           margin-left: 7px;
           color: #fff;
           font-weight: bold;
+          flex-shrink: 0;
         }
       `}</style>
-      <div className="dropdown-root" style={style} ref={dropdownRef}>
+      <div className={rootClass} style={style} ref={dropdownRef}>
         <div style={{ flex: 1, position: 'relative' }}>
           <button
-            className="dropdown-btn"
+            ref={buttonRef}
+            className={btnClass}
             style={buttonStyle}
             type="button"
             disabled={disabled}
-            onClick={() => !disabled && setIsOpen((v) => !v)}
+            onClick={handleToggle}
           >
             {renderSelected ? renderSelected(selected) : (selected?.length ? selected.join(', ') : placeholder)}
             <img
               src="dropdown.svg"
               alt=""
-              className="dropdown-arrow-img"
+              className={arrowClass}
               style={{
                 filter: "invert(0)",
               }}
             />
           </button>
-          {isOpen && (
-            <div className="dropdown-list" style={dropdownStyle}>
-              {options.map((option, idx) => (
-                <div
-                  key={option.value || option}
-                  className={
-                    "dropdown-option" +
-                    (selected && (selected.includes(option.value || option) ? " selected" : ""))
-                  }
-                  onClick={() => {
-                    onSelect(option.value || option);
-                  }}
-                >
-                  {renderOption ? renderOption(option) : (option.label || option)}
-                  {selected && selected.includes(option.value || option) && (
-                    <span className="dropdown-check">✓</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
         {clearable && (
           <button
-            className="dropdown-clear"
+            className={clearClass}
             type="button"
             onClick={onClear}
             title={clearButtonTitle}
@@ -192,6 +232,40 @@ const Dropdown = ({
           </button>
         )}
       </div>
+
+      {isOpen && (
+        <div
+          className={listClass}
+          style={{
+            top: `${dropdownPosition.top}px`,
+            left: `${dropdownPosition.left}px`,
+            width: `${dropdownPosition.width}px`,
+            maxHeight: `${dropdownPosition.maxHeight}px`,
+            ...dropdownStyle
+          }}
+        >
+          {options.map((option, idx) => (
+            <div
+              key={option.value || option}
+              className={
+                `${optionClass}` +
+                (selected && (selected.includes(option.value || option) ? " selected" : ""))
+              }
+              onClick={() => {
+                onSelect(option.value || option);
+                setIsOpen(false);
+              }}
+            >
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {renderOption ? renderOption(option) : (option.label || option)}
+              </span>
+              {selected && selected.includes(option.value || option) && (
+                <span className={checkClass}>✓</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </>
   );
 };

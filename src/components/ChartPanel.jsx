@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import ReactLoading from "react-loading";
+import { useChartData } from '../hooks/useChartData';
+import { createChartConfigs } from './chart/ChartConfigs';
 
 const API_BASE_URL = 'http://localhost:5000/api/charts';
 
@@ -348,6 +350,11 @@ const ChartPanel = ({
 
   const currentChart = charts[currentPage - 1];
 
+  const handleDownload = () => {
+    console.log('Download chart data for page:', currentPage);
+    // Implement download functionality
+  };
+
   if (error) {
     return (
       <div style={{
@@ -651,11 +658,7 @@ const ChartPanel = ({
           }}></div>
           
           <button
-            onClick={() => {
-              // Handle download functionality here
-              console.log('Download chart data for page:', currentPage);
-              // You can implement CSV download, image export, etc.
-            }}
+            onClick={handleDownload}
             style={{
               width: '33px',
               height: '34px',

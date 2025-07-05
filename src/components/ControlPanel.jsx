@@ -25,9 +25,10 @@ const ControlPanel = ({
     padding: '15px',
     boxShadow: '0 4px 20px black',
     border: '1px solid black',
-    overflow: 'auto',
+    overflow: 'visible', // Changed from 'auto' to 'visible' to allow dropdowns to extend outside
     width: '100%',
-    boxSizing: 'border-box'
+    boxSizing: 'border-box',
+    position: 'relative' // Added for dropdown positioning context
   };
 
   // Responsive grid: percentages for columns, 1px for separators, 1fr for actions
@@ -46,7 +47,8 @@ const ControlPanel = ({
     gap: '8px',
     paddingLeft,
     paddingRight,
-    minWidth: 0 // allow shrinking
+    minWidth: 0, // allow shrinking
+    position: 'relative' // Added for dropdown positioning
   });
 
   const headerStyle = {
