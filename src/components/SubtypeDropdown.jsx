@@ -144,15 +144,15 @@ const SubtypeDropdown = ({ selectedMainTypes, onSelectionChange }) => {
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', width: '100%' }}>
         <h4 style={{
           margin: '0',
-          fontSize: '12px',
+          fontSize: '10px',
           fontWeight: 'bold',
-          color: '#333',
+          color: 'black',
           width: '80px',
           flexShrink: 0
         }}>
           Event Sub Types
         </h4>
-        <div style={{ fontSize: '11px', color: '#666', flex: '1' }}>Loading...</div>
+        <div style={{ fontSize: '10px', color: '#666', flex: '1' }}>Loading...</div>
       </div>
     );
   }
@@ -161,9 +161,9 @@ const SubtypeDropdown = ({ selectedMainTypes, onSelectionChange }) => {
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', width: '100%' }}>
       <h4 style={{
         margin: '0',
-        fontSize: '12px',
+        fontSize: '10px',
         fontWeight: 'bold',
-        color: '#333',
+        color: '#000',
         width: '80px',
         flexShrink: 0
       }}>
@@ -180,7 +180,7 @@ const SubtypeDropdown = ({ selectedMainTypes, onSelectionChange }) => {
         renderSelected={(selected) => {
           if (!selected || selected.includes('All Subtypes')) return 'All Subtypes';
           if (selected.length === 1) return selected[0];
-          if (selected.length <= 3) return selected.join(', ');
+          if (selected.length <= 1) return selected.join(', ');
           return `${selected.length} subtypes selected`;
         }}
         renderOption={option => option.label}

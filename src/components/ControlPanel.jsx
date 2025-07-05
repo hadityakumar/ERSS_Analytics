@@ -33,7 +33,7 @@ const ControlPanel = ({
   // Responsive grid: percentages for columns, 1px for separators, 1fr for actions
   const gridStyle = {
     display: 'grid',
-    gridTemplateColumns: '15% 1px 21% 1px 25% 1px 20% 1px 1fr',
+    gridTemplateColumns: '11.6% 1px 25% 1px 25% 1px 20% 1px 1fr',
     gap: '0',
     height: '100%',
     alignItems: 'start',
@@ -51,7 +51,7 @@ const ControlPanel = ({
 
   const headerStyle = {
     margin: '0',
-    fontSize: '14px',
+    fontSize: '10.5px',
     fontWeight: 'bold',
     color: '#3C00FF',
     borderBottom: '2px solid #3C00FF',
@@ -67,6 +67,15 @@ const ControlPanel = ({
     padding: 0
   };
 
+  const ThickseparatorStyle = {
+    width: '2px',
+    backgroundColor: 'black',
+    alignSelf: 'stretch',
+    height: 'auto',
+    margin: 0,
+    padding: 0
+  };
+
   const lineStyle = {
     height: '1px',
     backgroundColor: '#ddd',
@@ -74,13 +83,14 @@ const ControlPanel = ({
   };
 
   const labelStyle = {
-    fontSize: '12px',
+    fontSize: '10px',
     fontWeight: 'bold',
     color: '#333',
     minWidth: '60px'
   };
 
-  const InputRow = ({ label, placeholder, type = "text", step, unit }) => (
+  // UPDATED InputRow to accept inputWidth and set flex:none if width is specified
+  const InputRow = ({ label, placeholder, type = "text", step, unit, inputWidth }) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
       <label style={labelStyle}>{label}:</label>
       <input
@@ -88,6 +98,7 @@ const ControlPanel = ({
         type={type}
         step={step}
         placeholder={placeholder}
+        style={inputWidth ? { width: inputWidth, flex: 'none' } : {}}
       />
       {unit && <span style={{ fontSize: '10px', color: '#666' }}>{unit}</span>}
     </div>
@@ -109,6 +120,9 @@ const ControlPanel = ({
           box-sizing: border-box;
           transition: border 0.16s;
         }
+        .cp-input::placeholder {
+          font-size: 10px;
+        }
         .cp-input:focus {
           border: 2.5px solid #111;
         }
@@ -118,10 +132,9 @@ const ControlPanel = ({
         <div style={columnStyle('0px')}>
           <h3 style={headerStyle}>Date Range & Time</h3>
           <DateRangeSelector onDateRangeChange={setSelectedDateRange} />
-          <div style={lineStyle}></div>
         </div>
 
-        <div style={separatorStyle}></div>
+        <div style={ThickseparatorStyle}></div>
 
         {/* Column 2: Event Details */}
         <div style={columnStyle('8px')}>
@@ -131,7 +144,7 @@ const ControlPanel = ({
             selectedMainTypes={selectedMainTypes}
             onSelectionChange={setSelectedSubtypes}
           />
-          <RangeDropdown/>
+          <RangeDropdown />
           <div style={lineStyle}></div>
           <TemporalTrendDropdown onSelectionChange={setSelectedTemporalTrend} />
         </div>
@@ -164,10 +177,11 @@ const ControlPanel = ({
           <h3 style={headerStyle}>Location</h3>
           <InputRow label="Landmark" placeholder="Search landmark..." />
           <div style={{ height: '1px', backgroundColor: '#ddd', margin: '4px 0' }}></div>
-          <InputRow label="Latitude" placeholder="40.7128" type="number" step="any" />
-          <InputRow label="Longitude" placeholder="-74.0060" type="number" step="any" />
+          {/* Latitude and Longitude with width 50px */}
+          <InputRow label="Latitude" placeholder="00.000000" type="number" step="any" inputWidth="100px" />
+          <InputRow label="Longitude" placeholder="00.000000" type="number" step="any" inputWidth="100px" />
           <div style={{ height: '1px', backgroundColor: '#ddd', margin: '4px 0' }}></div>
-          <InputRow label="Range" placeholder="1.0" type="number" step="0.1" unit="km" />
+          <InputRow label="Range" placeholder="1.0" type="number" step="0.1" inputWidth="100px" unit="km" />
         </div>
 
         <div style={separatorStyle}></div>

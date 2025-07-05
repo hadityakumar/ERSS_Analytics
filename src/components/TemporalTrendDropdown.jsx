@@ -25,9 +25,9 @@ const TemporalTrendDropdown = ({ onSelectionChange }) => {
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', width: '100%' }}>
       <h4 style={{
         margin: '0',
-        fontSize: '12px',
+        fontSize: '10px',
         fontWeight: 'bold',
-        color: '#333',
+        color: '#00',
         width: '80px',
         flexShrink: 0
       }}>

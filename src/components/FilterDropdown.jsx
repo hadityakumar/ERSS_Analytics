@@ -107,15 +107,15 @@ const FilterDropdown = ({ onSelectionChange }) => {
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', width: '100%' }}>
         <h4 style={{
           margin: '0',
-          fontSize: '12px',
+          fontSize: '10px',
           fontWeight: 'bold',
-          color: '#333',
+          color: 'black',
           width: '80px',
           flexShrink: 0
         }}>
           Event Main-Types
         </h4>
-        <div style={{ fontSize: '11px', color: '#666', flex: '1' }}>Loading...</div>
+        <div style={{ fontSize: '10px', color: '#666', flex: '1' }}>Loading...</div>
       </div>
     );
   }
@@ -124,9 +124,9 @@ const FilterDropdown = ({ onSelectionChange }) => {
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', width: '100%' }}>
       <h4 style={{
         margin: '0',
-        fontSize: '12px',
+        fontSize: '10px',
         fontWeight: 'bold',
-        color: '#333',
+        color: 'black',
         width: '80px',
         flexShrink: 0
       }}>
@@ -143,7 +143,7 @@ const FilterDropdown = ({ onSelectionChange }) => {
         renderSelected={(selected) => {
           if (!selected || selected.includes('All Types')) return 'All Types';
           if (selected.length === 1) return selected[0];
-          if (selected.length <= 3) return selected.join(', ');
+          if (selected.length <= 1) return selected.join(', ');
           return `${selected.length} types selected`;
         }}
         renderOption={option => option.label}

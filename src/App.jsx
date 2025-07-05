@@ -18,7 +18,7 @@ import PreLoader from './components/PreLoader';
 import ErrorState from './components/ErrorState';
 import { ToastContainer } from 'react-toastify';
 
-const HEADER_HEIGHT = 35;  // px
+const HEADER_HEIGHT = 26;  // px
 const FOOTER_HEIGHT = 28;  // px
 
 const ContentPanel = ({ style, children }) => (
@@ -38,8 +38,8 @@ const SidebarIconButton = ({ active, onClick, iconSrc, alt }) => (
   <div
     onClick={onClick}
     style={{
-      width: '3rem',
-      height: '3rem',
+      width: '42px',
+      height: '42px',
       margin: '0',
       borderRadius: '20%',
       background: active ? '#fff' : 'transparent',
@@ -90,8 +90,8 @@ const CollapseButton = ({ isCollapsed, onClick }) => (
       color: 'white',
       border: 'none',
       borderRadius: '4px',
-      width: '30px',
-      height: '30px',
+      width: '33px',
+      height: '33px',
       cursor: 'pointer',
       display: 'flex',
       alignItems: 'center',
@@ -141,7 +141,7 @@ const App = () => {
     display: 'flex',
     flexDirection: 'column',
     gap: '10px',
-    padding: '10px',
+    padding: '10px 5px',
     overflow: 'hidden',
     backgroundColor: '#000',
   };
@@ -150,7 +150,7 @@ const App = () => {
     flex: 1,
     display: 'flex',
     flexDirection: 'row',
-    gap: '10px',
+    gap: '5px',
     minHeight: 0,
     minWidth: 0,
   };
@@ -404,7 +404,13 @@ const App = () => {
                   <p style={{ fontSize: '22px', color: '#666' }}>
                     This page will display the allocation of Mobile Data Terminals (MDTs)
                   </p>
-                </div>
+                
+                  <img
+                    src="gears.gif"
+                    alt="Loading"
+                    style={{ width: '150px', height: '150px', marginTop: '10px' }}
+                  />
+                  </div>
               </div>
 
               {/* PAGE 3 */}

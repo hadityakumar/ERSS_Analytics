@@ -32,8 +32,8 @@ export default function DateRangeSelector({ onDateRangeChange }) {
     <>
       <style>{`
         .drs-label {
-          font-size: 12px;
-          color: #222;
+          font-size: 10px;
+          color: black;
           font-weight: 600;
           margin-bottom: 2px;
           letter-spacing: 0.01em;
@@ -43,14 +43,14 @@ export default function DateRangeSelector({ onDateRangeChange }) {
         .drs-group {
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 4px;
           width: 100%;
           margin-bottom: 0px;
         }
         .drs-row {
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 2px;
           width: 100%;
           justify-content: flex-end;
         }
@@ -77,11 +77,11 @@ export default function DateRangeSelector({ onDateRangeChange }) {
         }
         .drs-input.date {
           width: 120px;
-          min-width: 90px;
+          min-width: 82px;
           max-width: 140px;
         }
         .drs-input.time {
-          width: 100px;
+          width: 83px;
           min-width: 60px;
           max-width: 90px;
         }

@@ -7,7 +7,7 @@ const Header = () => {
       top: '0px',
       left: '0px',
       width: '100%', 
-      height: '40px',
+      height: '32px',
       backgroundColor: '#000000',
       color: 'white',
       display: 'flex',
@@ -29,7 +29,7 @@ const Header = () => {
         <span style={{
           fontSize: '17px',
           fontWeight: '500',
-          color: 'rgba(255, 255, 255, 0.8)'
+          color: '#B2B2B2'
         }}>
           ERSS Analytics
         </span>

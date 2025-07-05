@@ -79,14 +79,14 @@ const SeverityRadio = ({ selectedMainTypes, selectedSubtypes, onSelectionChange 
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '5px' }}>
         <h4 style={{
           margin: '0x',
-          fontSize: '12px',
+          fontSize: '10..5px',
           fontWeight: 'bold',
           color: '#333',
           minWidth: '80px'
         }}>
           Severity Levels:
         </h4>
-        <div style={{ fontSize: '11px', color: '#666' }}>Loading...</div>
+        <div style={{ fontSize: '10.5px', color: '#666' }}>Loading...</div>
       </div>
     );
   }
@@ -97,12 +97,12 @@ const SeverityRadio = ({ selectedMainTypes, selectedSubtypes, onSelectionChange 
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
       <h4 style={{
         margin: '0',
-        fontSize: '12px',
+        fontSize: '11.5px',
         fontWeight: 'bold',
         color: '#333',
         minWidth: '80px'
       }}>
-        Severity Levels:
+        Severity Levels
       </h4>
       <div
         style={{
@@ -161,7 +161,7 @@ const SeverityButton = ({ checked, label, onClick, style = {} }) => (
       flexDirection: 'row',
       alignItems: 'center',
       cursor: 'pointer',
-      fontSize: '11px',
+      fontSize: '10px',
       color: '#333',
       userSelect: 'none',
       gap: '7px',
@@ -170,10 +170,10 @@ const SeverityButton = ({ checked, label, onClick, style = {} }) => (
     onClick={onClick}
   >
     <span style={{
-      width: 20,
-      height: 20,
-      minWidth: 20,
-      minHeight: 20,
+      width: 9,
+      height: 9,
+      minWidth: 6,
+      minHeight: 6,
       border: checked ? 'none' : '2px solid #000',
       borderRadius: '3px',
       background: checked ? '#28a745' : '#fff',
@@ -184,7 +184,7 @@ const SeverityButton = ({ checked, label, onClick, style = {} }) => (
       fontSize: '14px',
       transition: 'background 0.15s, border 0.15s'
     }}>
-      {checked && <span style={{ color: '#fff', fontSize: '14px', lineHeight: 1 }}>✓</span>}
+      {checked && <span style={{ color: '#fff', fontSize: '10px', lineHeight: 1 }}>✓</span>}
     </span>
     <span>{label}</span>
   </label>

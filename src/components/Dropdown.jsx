@@ -37,7 +37,7 @@ const Dropdown = ({
         .dropdown-root {
           width: ${width};
           position: relative;
-          font-size: 12px;
+          font-size: 10px;
           display: flex;
           align-items: stretch;
         }
@@ -50,7 +50,7 @@ const Dropdown = ({
           text-align: left;
           cursor: ${disabled ? "not-allowed" : "pointer"};
           color: #111;
-          font-size: 12px;
+          font-size: 10px;
           outline: none;
           transition: border 0.15s;
           min-height: 32px;
