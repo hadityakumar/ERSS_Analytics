@@ -3,6 +3,10 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import ReactLoading from "react-loading";
 import { useChartData } from '../hooks/useChartData';
 import { createChartConfigs } from './chart/ChartConfigs';
+import ChartHeader from './chart/ChartHeader';
+import ChartLegend from './chart/ChartLegend';
+import ChartPagination from './chart/ChartPagination';
+import ChartLoadingOverlay from './chart/ChartLoadingOverlay';
 
 const API_BASE_URL = 'http://localhost:5000/api/charts';
 
@@ -115,7 +119,7 @@ const ChartPanel = ({
     return params;
   }, [selectedDateRange, selectedMainTypes, selectedSubtypes, selectedSeverities, selectedPartOfDay]);
 
-  // Fetch data from backend - SIMPLIFIED to prevent infinite loops
+  // Fetch data from backend
   const fetchChartData = useCallback(async () => {
     console.log('Starting chart data fetch...');
     setLoading(true);
@@ -282,8 +286,15 @@ const ChartPanel = ({
               angle={selectedTemporalTrend === 'Daily' ? -45 : 0}
               textAnchor={selectedTemporalTrend === 'Daily' ? 'end' : 'middle'}
               height={selectedTemporalTrend === 'Daily' ? 80 : 60}
+              style={{ fontSize: '8px' }}
+              tick={{ fontSize: 8, fill: '#666' }}
+              tickLine={{ stroke: '#666' }}
             />
-            <YAxis />
+            <YAxis 
+              style={{ fontSize: '8px' }}
+              tick={{ fontSize: 8, fill: '#666' }}
+              tickLine={{ stroke: '#666' }}
+            />
             <Tooltip />
             <Line type="monotone" dataKey="Count" stroke="#8884d8" strokeWidth={3} />
           </LineChart>
@@ -457,56 +468,8 @@ const ChartPanel = ({
           </div>
         )}
 
-        {/* Header */}
-        <div style={{ marginBottom: '12px', flexShrink: 0, backgroundColor: '#fff' }}>
-          {/* Top border line */}
-          <div style={{
-            height: '1px',
-            backgroundColor: '#ddd',
-            marginBottom: '8px'
-          }}></div>
-          
-          {/* Main plot title */}
-          <h2 style={{
-            margin: '0 0 8px 0',
-            fontSize: '18px',
-            fontWeight: 'bold',
-            color: '#333'
-          }}>
-            {currentChart.title}
-          </h2>
-          
-          {/* Bottom border line */}
-          <div style={{
-            height: '1px',
-            backgroundColor: '#ddd',
-            marginBottom: '8px'
-          }}></div>
-          
-          {/* Summary subheading */}
-          <h3 style={{
-            margin: '0 0 4px 0',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            color: '#555',
-            borderBottom: '1px solid #333',
-            paddingBottom: '2px',
-            display: 'inline-block'
-          }}>
-            Summary
-          </h3>
-          
-          {/* Description text */}
-          <p style={{
-            margin: '8px 0 0 0',
-            fontSize: '12px',
-            color: '#666',
-            lineHeight: '1.4'
-          }}>
-            {currentChart.description}
-          </p>
-        </div>
-
+        <ChartHeader title={currentChart.title} description={currentChart.description} />
+        
         {/* Chart and Legend container - Scrollable */}
         <div style={{
           flex: '1',
@@ -528,172 +491,16 @@ const ChartPanel = ({
           }}>
             {currentChart.component}
           </div>
-
-          {/* Legend area */}
-          <div style={{
-            width: '180px',
-            backgroundColor: '#fff',
-            borderRadius: '4px',
-            padding: '12px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-            flexShrink: 0,
-            border: '1px solid #ddd'
-          }}>
-            <div style={{
-              fontSize: '13px',
-              fontWeight: 'bold',
-              color: '#333',
-              marginBottom: '4px',
-              borderBottom: '1px solid #ddd',
-              paddingBottom: '4px'
-            }}>
-              Legend
-            </div>
-            {currentChart.legend.map((item, index) => (
-              <div key={index} style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '4px 0'
-              }}>
-                <div style={{
-                  width: '14px',
-                  height: '14px',
-                  backgroundColor: item.color,
-                  borderRadius: '3px',
-                  flexShrink: 0
-                }}></div>
-                <span style={{
-                  fontSize: '11px',
-                  color: '#666',
-                  fontWeight: '500',
-                  lineHeight: '1.3'
-                }}>
-                  {item.label}
-                </span>
-              </div>
-            ))}
-          </div>
+          <ChartLegend legend={currentChart.legend} />
         </div>
       </div>
-
-      {/* Vertical Pagination - Right Side */}
-      <div style={{
-        position: 'absolute',
-        right: 0,
-        top: '15px',
-        width: '60px',
-        height: 'calc(100% - 20px)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: '#fff'
-      }}>
-        {/* Left border*/}
-        <div style={{
-          position: 'absolute',
-          left: '12px',
-          top: 0,
-          bottom: 0,
-          width: '3px',
-          backgroundColor: 'black'
-        }}></div>
-        
-        {/* Pagination buttons - Top */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '0px',
-          padding: '0px 8px',
-          marginTop: '0px'
-        }}>
-          {Array.from({ length: totalPages }, (_, index) => (
-            <React.Fragment key={index + 1}>
-              <button
-                onClick={() => handlePageChange(index + 1)}
-                style={{
-                  width: '33px',
-                  height: '34px',
-                  border: 'none',
-                  backgroundColor: currentPage === index + 1 ? '#000' : 'transparent',
-                  color: currentPage === index + 1 ? '#fff' : '#000',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                {index + 1}
-              </button>
-              {index < totalPages - 1 && (
-                <div style={{
-                  width: '30px',
-                  height: '1px',
-                  backgroundColor: '#ddd'
-                }}></div>
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-
-        {/* Download button - Bottom */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          padding: '0px 8px',
-          marginBottom: '10px'
-        }}>
-          {/* Top line */}
-          <div style={{
-            width: '30px',
-            height: '1px',
-            backgroundColor: '#ddd',
-            marginBottom: '0px'
-          }}></div>
-          
-          <button
-            onClick={handleDownload}
-            style={{
-              width: '33px',
-              height: '34px',
-              border: 'none',
-              backgroundColor: 'transparent',
-              color: '#000',
-              fontSize: '10px',
-              cursor: 'pointer',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '2px'
-            }}
-            onMouseOver={(e) => {
-              e.target.style.backgroundColor = '#f0f0f0';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.backgroundColor = 'transparent';
-            }}
-            title="Download chart data"
-          >
-           <img src="download_button.svg" alt="" />
-            
-          </button>
-          
-          {/* Bottom line */}
-          <div style={{
-            width: '30px',
-            height: '1px',
-            backgroundColor: '#ddd',
-            marginTop: '0px'
-          }}></div>
-        </div>
-      </div>
+      
+      <ChartPagination
+        currentPage={currentPage}
+        totalPages={charts.length}
+        onPageChange={setCurrentPage}
+        onDownload={handleDownload}
+      />
     </div>
   );
 };

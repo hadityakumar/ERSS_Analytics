@@ -295,7 +295,7 @@ export const handleLoadEmergingHotspotsData = async (store) => {
             layers: [
               {
                 id: layerId,
-                type: 'point',
+                type: 'hexagon',
                 config: {
                   dataId: datasetId,
                   label: 'Emerging Hotspots',

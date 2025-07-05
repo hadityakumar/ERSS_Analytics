@@ -65,7 +65,7 @@ export const loadDataToKepler = (store, parsedData, label) => {
         options: { 
           centerMap: false,
           keepExistingConfig: true,
-          readOnly: true,   //keep this false if u want the panel ****
+          readOnly: false,   //keep this false if u want the panel ****
         },
         config: config.config
       })

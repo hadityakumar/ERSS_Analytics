@@ -14,13 +14,14 @@ const Dropdown = ({
   style = {},
   dropdownStyle = {},
   buttonStyle = {},
-  clearButtonTitle = "Clear selection"
+  clearButtonTitle = "Clear selection",
+  multiSelect = true 
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const dropdownRef = useRef();
   const buttonRef = useRef();
-  const uniqueId = useId(); // Generate unique ID for this dropdown instance
+  const uniqueId = useId();
 
   // Calculate dropdown position
   useEffect(() => {
@@ -53,20 +54,48 @@ const Dropdown = ({
   // Close dropdown on outside click
   useEffect(() => {
     if (!isOpen) return;
+    
     const handleClick = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setIsOpen(false);
+        const dropdownList = document.querySelector(`.dropdown-list-${uniqueId.replace(/:/g, '')}`);
+        if (!dropdownList || !dropdownList.contains(e.target)) {
+          setIsOpen(false);
+        }
       }
     };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [isOpen]);
+    
+    // Use a slight delay to prevent immediate closure
+    const timeoutId = setTimeout(() => {
+      document.addEventListener("mousedown", handleClick);
+    }, 100);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("mousedown", handleClick);
+    };
+  }, [isOpen, uniqueId]);
 
   const handleToggle = () => {
     if (!disabled) {
       setIsOpen(prev => !prev);
     }
   };
+
+  const handleOptionClick = (optionValue) => {
+    // Handle the selection first
+    onSelect(optionValue);
+    
+    // For single-select, close the dropdown after selection
+    // For multi-select, keep it open
+    if (!multiSelect) {
+      setTimeout(() => {
+        setIsOpen(false);
+      }, 50);
+    }
+  };
+
+  // Detect if this is a multi-select based on selected being an array with multiple items
+  const isMultiSelect = multiSelect || (Array.isArray(selected) && selected.length >= 0);
 
   // Create unique class names for this dropdown instance
   const rootClass = `dropdown-root-${uniqueId.replace(/:/g, '')}`;
@@ -183,6 +212,7 @@ const Dropdown = ({
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          user-select: none;
         }
         .${optionClass}:last-child {
           border-bottom: none;
@@ -251,9 +281,9 @@ const Dropdown = ({
                 `${optionClass}` +
                 (selected && (selected.includes(option.value || option) ? " selected" : ""))
               }
-              onClick={() => {
-                onSelect(option.value || option);
-                setIsOpen(false);
+              onMouseDown={(e) => {
+                e.preventDefault(); // Prevent the mousedown from triggering outside click
+                handleOptionClick(option.value || option);
               }}
             >
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
