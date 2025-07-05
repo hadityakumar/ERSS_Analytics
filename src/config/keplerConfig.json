@@ -156,8 +156,8 @@
           "enabled": false
         }
       },
-      "layerBlending": "normal",
-      "overlayBlending": "normal",
+      "layerBlending": "additive",
+      "overlayBlending": "screen",
       "splitMaps": [],
       "animationConfig": {
         "currentTime": null,

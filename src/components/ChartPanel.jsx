@@ -288,7 +288,10 @@ const ChartPanel = ({
           }}>
             {currentChart.component}
           </div>
-          <ChartLegend legend={currentChart.legend} />
+          {/* Only render legend if it has items */}
+          {currentChart.legend && currentChart.legend.length > 0 && (
+            <ChartLegend legend={currentChart.legend} />
+          )}
         </div>
       </div>
       

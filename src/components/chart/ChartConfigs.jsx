@@ -18,7 +18,6 @@ export const createChartConfigs = (data, selectedTemporalTrend) => {
     return descriptions[selectedTemporalTrend] || 'Temporal pattern analysis showing incident distribution over time.';
   };
 
-
   const KPIGrid = ({ kpiData }) => (
     <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', backgroundColor: '#fff' }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
@@ -58,7 +57,7 @@ export const createChartConfigs = (data, selectedTemporalTrend) => {
       title: "Key Performance Indicators",
       description: "Overview of critical crime statistics and metrics for operational decision-making and resource allocation based on current filters.",
       component: <KPIGrid kpiData={data.kpi} />,
-      legend: []
+      legend: [] // Empty legend for KPI chart
     },
     {
       id: 2,
@@ -74,10 +73,12 @@ export const createChartConfigs = (data, selectedTemporalTrend) => {
                   selectedTemporalTrend === 'Monthly' ? 'Month' :
                     selectedTemporalTrend === 'Yearly' ? 'Year' : 'Period'}
               height={selectedTemporalTrend === 'Daily' ? 80 : 60}
-
+              tick={{ fontSize: 10 }}
+              angle={selectedTemporalTrend === 'Daily' ? -45 : 0}
+              textAnchor={selectedTemporalTrend === 'Daily' ? 'end' : 'middle'}
             />
-            <YAxis
-
+            <YAxis 
+              tick={{ fontSize: 10 }}
             />
             <Tooltip />
             <Line type="monotone" dataKey="Count" stroke="#8884d8" strokeWidth={3} />

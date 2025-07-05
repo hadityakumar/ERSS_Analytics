@@ -288,7 +288,7 @@ export const handleLoadEmergingHotspotsData = async (store) => {
         options: {
           centerMap: false,
           keepExistingConfig: true,
-          readOnly: false
+          readOnly: true
         },
         config: {
           visState: {
