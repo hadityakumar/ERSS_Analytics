@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import ReactLoading from "react-loading";
-import { useChartData } from '../hooks/useChartData';
 import { createChartConfigs } from './chart/ChartConfigs';
 import ChartHeader from './chart/ChartHeader';
 import ChartLegend from './chart/ChartLegend';
@@ -9,14 +7,6 @@ import ChartPagination from './chart/ChartPagination';
 import ChartLoadingOverlay from './chart/ChartLoadingOverlay';
 
 const API_BASE_URL = 'http://localhost:5000/api/charts';
-
-// Define consistent colors for chart elements
-const CHART_COLORS = [
-  '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#20c997', 
-  '#fd7e14', '#e83e8c', '#6c757d', '#17a2b8', '#6610f2', '#ff69b4', 
-  '#00bfff', '#adff2f', '#ff4500', '#8a2be2', '#7fff00', '#d2691e', 
-  '#ff7f50', '#6495ed'
-];
 
 const ChartPanel = ({
   selectedDateRange,
@@ -29,19 +19,19 @@ const ChartPanel = ({
   selectedCityLocation
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 4;
 
   // Chart data states
-  const [kpiData, setKpiData] = useState({
-    total_incidents: 0,
-    most_common_main_event: 'N/A',
-    emergency_incidents_count: 0,
-    average_daily_incidents: 0
+  const [chartData, setChartData] = useState({
+    kpi: {
+      total_incidents: 0,
+      most_common_main_event: 'N/A',
+      emergency_incidents_count: 0,
+      average_daily_incidents: 0
+    },
+    temporal: [],
+    mainEvent: [],
+    severity: []
   });
-  const [temporalChartData, setTemporalChartData] = useState([]);
-  const [mainEventTypeDistributionData, setMainEventTypeDistributionData] = useState([]);
-  const [severityDistributionData, setSeverityDistributionData] = useState([]);
-  const [topMainEventTypesData, setTopMainEventTypesData] = useState([]);
 
   // Loading and error states
   const [loading, setLoading] = useState(false);
@@ -140,8 +130,7 @@ const ChartPanel = ({
         `${API_BASE_URL}/kpis?${queryParams.toString()}`,
         `${API_BASE_URL}/trends?${temporalParams.toString()}`,
         `${API_BASE_URL}/main-event-distribution?${queryParams.toString()}`,
-        `${API_BASE_URL}/severity-distribution?${queryParams.toString()}`,
-        `${API_BASE_URL}/top-main-events?top_n=5&${queryParams.toString()}`
+        `${API_BASE_URL}/severity-distribution?${queryParams.toString()}`
       ];
 
       console.log('API endpoints:', endpoints);
@@ -165,43 +154,26 @@ const ChartPanel = ({
       
       console.log('API Results:', results);
 
-      const [kpiResult, temporalResult, mainEventResult, severityResult, topEventsResult] = results;
+      const [kpiResult, temporalResult, mainEventResult, severityResult] = results;
 
-      // Update states with more defensive checks
-      if (kpiResult && !kpiResult.error) {
-        console.log('Setting KPI data:', kpiResult);
-        setKpiData(kpiResult);
-      } else {
-        console.log('KPI error or no data:', kpiResult);
-      }
-      
-      if (temporalResult && !temporalResult.error && temporalResult.current_trend) {
-        console.log('Setting temporal data:', temporalResult.current_trend);
-        setTemporalChartData(Array.isArray(temporalResult.current_trend) ? temporalResult.current_trend : []);
-      } else {
-        console.log('Temporal error or no data:', temporalResult);
-      }
-      
-      if (mainEventResult && !mainEventResult.error && mainEventResult.data) {
-        console.log('Setting main event data:', mainEventResult.data);
-        setMainEventTypeDistributionData(Array.isArray(mainEventResult.data) ? mainEventResult.data : []);
-      } else {
-        console.log('Main event error or no data:', mainEventResult);
-      }
-      
-      if (severityResult && !severityResult.error && severityResult.data) {
-        console.log('Setting severity data:', severityResult.data);
-        setSeverityDistributionData(Array.isArray(severityResult.data) ? severityResult.data : []);
-      } else {
-        console.log('Severity error or no data:', severityResult);
-      }
-      
-      if (topEventsResult && !topEventsResult.error && topEventsResult.data) {
-        console.log('Setting top events data:', topEventsResult.data);
-        setTopMainEventTypesData(Array.isArray(topEventsResult.data) ? topEventsResult.data : []);
-      } else {
-        console.log('Top events error or no data:', topEventsResult);
-      }
+      // Update chart data state
+      setChartData({
+        kpi: (kpiResult && !kpiResult.error) ? kpiResult : {
+          total_incidents: 0,
+          most_common_main_event: 'N/A',
+          emergency_incidents_count: 0,
+          average_daily_incidents: 0
+        },
+        temporal: (temporalResult && !temporalResult.error && temporalResult.current_trend) 
+          ? (Array.isArray(temporalResult.current_trend) ? temporalResult.current_trend : [])
+          : [],
+        mainEvent: (mainEventResult && !mainEventResult.error && mainEventResult.data)
+          ? (Array.isArray(mainEventResult.data) ? mainEventResult.data : [])
+          : [],
+        severity: (severityResult && !severityResult.error && severityResult.data)
+          ? (Array.isArray(severityResult.data) ? severityResult.data : [])
+          : []
+      });
 
     } catch (err) {
       const errorMessage = err.message || "Failed to fetch chart data";
@@ -210,150 +182,18 @@ const ChartPanel = ({
     } finally {
       setLoading(false);
     }
-  }, [queryParams, selectedTemporalTrend]); // FIXED dependencies
+  }, [queryParams, selectedTemporalTrend]);
 
   // Fetch data when component mounts and when dependencies change
   useEffect(() => {
     console.log('ChartPanel useEffect triggered');
     fetchChartData();
-  }, [fetchChartData]); // SIMPLIFIED dependencies
+  }, [fetchChartData]);
 
-  // Get trend chart description
-  const getTrendChartDescription = () => {
-    const descriptions = {
-      'Hourly': 'Hourly pattern analysis showing incident distribution throughout the day for optimal resource deployment.',
-      'Daily': 'Weekly pattern analysis showing incident distribution by day of the week to optimize patrol schedules.',
-      'Weekly': 'Weekly trend analysis showing incident patterns over time for strategic planning.',
-      'Monthly': 'Monthly trend analysis showing seasonal patterns and long-term crime trends.',
-      'Yearly': 'Yearly trend analysis showing annual crime statistics and multi-year patterns.'
-    };
-    return descriptions[selectedTemporalTrend] || 'Temporal pattern analysis showing incident distribution over time.';
-  };
-
-  // Chart configurations
-  const charts = [
-    {
-      id: 1,
-      title: "Key Performance Indicators",
-      description: "Overview of critical crime statistics and metrics for operational decision-making and resource allocation based on current filters.",
-      component: (
-        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', backgroundColor: '#fff' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-            <div style={{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', textAlign: 'center', border: '1px solid #ddd' }}>
-              <h4 style={{ margin: '0 0 8px 0', color: '#495057' }}>Total Incidents</h4>
-              <p style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: 'black' }}>
-                {kpiData.total_incidents || 0}
-              </p>
-            </div>
-            <div style={{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', textAlign: 'center', border: '1px solid #ddd' }}>
-              <h4 style={{ margin: '0 0 8px 0', color: '#495057' }}>Emergency Incidents</h4>
-              <p style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: 'black' }}>
-                {kpiData.emergency_incidents_count || 0}
-              </p>
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-            <div style={{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', textAlign: 'center', border: '1px solid #ddd' }}>
-              <h4 style={{ margin: '0 0 8px 0', color: '#495057' }}>Most Common Event</h4>
-              <p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'black' }}>
-                {kpiData.most_common_main_event || 'N/A'}
-              </p>
-            </div>
-            <div style={{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', textAlign: 'center', border: '1px solid #ddd' }}>
-              <h4 style={{ margin: '0 0 8px 0', color: '#495057' }}>Avg Daily Incidents</h4>
-              <p style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: 'black' }}>
-                {kpiData.average_daily_incidents ? kpiData.average_daily_incidents.toFixed(1) : '0.0'}
-              </p>
-            </div>
-          </div>
-        </div>
-      ),
-      legend: []
-    },
-    {
-      id: 2,
-      title: `${selectedTemporalTrend} Trend Analysis`,
-      description: getTrendChartDescription(),
-      component: (
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={temporalChartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey={selectedTemporalTrend === 'Hourly' ? 'Hour of Day (24-hour)' : 
-                       selectedTemporalTrend === 'Daily' ? 'Day of Week' :
-                       selectedTemporalTrend === 'Monthly' ? 'Month' : 
-                       selectedTemporalTrend === 'Yearly' ? 'Year' : 'Period'} 
-              angle={selectedTemporalTrend === 'Daily' ? -45 : 0}
-              textAnchor={selectedTemporalTrend === 'Daily' ? 'end' : 'middle'}
-              height={selectedTemporalTrend === 'Daily' ? 80 : 60}
-              style={{ fontSize: '8px' }}
-              tick={{ fontSize: 8, fill: '#666' }}
-              tickLine={{ stroke: '#666' }}
-            />
-            <YAxis 
-              style={{ fontSize: '8px' }}
-              tick={{ fontSize: 8, fill: '#666' }}
-              tickLine={{ stroke: '#666' }}
-            />
-            <Tooltip />
-            <Line type="monotone" dataKey="Count" stroke="#8884d8" strokeWidth={3} />
-          </LineChart>
-        </ResponsiveContainer>
-      ),
-      legend: [
-        { color: '#8884d8', label: `${selectedTemporalTrend} Incidents` }
-      ]
-    },
-    {
-      id: 3,
-      title: "Incident Type Distribution",
-      description: "Breakdown of incident categories showing the most prevalent types of crimes reported in the selected timeframe and filters.",
-      component: (
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={mainEventTypeDistributionData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="MainEventType" angle={-45} textAnchor="end" height={100} />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="Count" fill="#82ca9d" />
-          </BarChart>
-        </ResponsiveContainer>
-      ),
-      legend: [
-        { color: '#82ca9d', label: 'Incident Count' }
-      ]
-    },
-    {
-      id: 4,
-      title: "Severity Level Distribution",
-      description: "Distribution of incidents by severity levels based on current filters, crucial for understanding threat levels and response prioritization.",
-      component: (
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={severityDistributionData.map((item, index) => ({
-                ...item,
-                name: item.Severity,
-                value: item.Count,
-                fill: CHART_COLORS[index % CHART_COLORS.length]
-              }))}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              outerRadius={80}
-              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-            />
-            <Tooltip />
-          </PieChart>
-        </ResponsiveContainer>
-      ),
-      legend: severityDistributionData.map((item, index) => ({ 
-        color: CHART_COLORS[index % CHART_COLORS.length], 
-        label: `${item.Severity} (${item.Count})` 
-      }))
-    }
-  ];
+  // Generate chart configurations using the modular approach
+  const charts = useMemo(() => {
+    return createChartConfigs(chartData, selectedTemporalTrend);
+  }, [chartData, selectedTemporalTrend]);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -422,51 +262,8 @@ const ChartPanel = ({
         backgroundColor: '#fff',
         position: 'relative'
       }}>
-        {/* Loading overlay - only covers the main content area */}
-        {loading && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: 'rgba(255, 255, 255, 1)',
-            zIndex: 10,
-            borderRadius: '5px'
-          }}>
-            <ReactLoading
-              type={"bars"}
-              color={"black"}
-              height={60}
-              width={60}
-            />
-            <div style={{
-              marginTop: '20px',
-              textAlign: 'center'
-            }}>
-              <h3 style={{ 
-                color: 'black', 
-                marginBottom: '8px',
-                fontSize: '16px',
-                fontWeight: '500'
-              }}>
-                Loading Chart Data
-              </h3>
-              <p style={{ 
-                color: '#666',
-                fontSize: '12px',
-                fontWeight: '400',
-                margin: 0
-              }}>
-                Fetching analytics from server...
-              </p>
-            </div>
-          </div>
-        )}
+        {/* Loading overlay using ChartLoadingOverlay component */}
+        {loading && <ChartLoadingOverlay />}
 
         <ChartHeader title={currentChart.title} description={currentChart.description} />
         

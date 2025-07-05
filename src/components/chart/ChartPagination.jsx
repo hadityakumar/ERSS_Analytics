@@ -63,7 +63,7 @@ const ChartPagination = ({ currentPage, totalPages, onPageChange, onDownload }) 
       flexDirection: 'column',
       alignItems: 'center',
       padding: '0px 8px',
-      marginBottom: '10px'
+      marginBottom: '65px'
     }}>
       <div style={{ width: '30px', height: '1px', backgroundColor: '#ddd', marginBottom: '0px' }} />
       <button
