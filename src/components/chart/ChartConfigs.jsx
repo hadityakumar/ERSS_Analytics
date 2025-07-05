@@ -2,7 +2,7 @@ import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie } from 'recharts';
 
 const CHART_COLORS = [
-  '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#20c997', 
+  '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#20c997',
   '#fd7e14', '#e83e8c', '#6c757d', '#17a2b8', '#6610f2', '#ff69b4'
 ];
 
@@ -18,32 +18,33 @@ export const createChartConfigs = (data, selectedTemporalTrend) => {
     return descriptions[selectedTemporalTrend] || 'Temporal pattern analysis showing incident distribution over time.';
   };
 
+
   const KPIGrid = ({ kpiData }) => (
     <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', backgroundColor: '#fff' }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
         <div style={{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', textAlign: 'center', border: '1px solid #ddd' }}>
-          <h4 style={{ margin: '0 0 8px 0', color: '#495057' }}>Total Incidents</h4>
-          <p style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: 'black' }}>
+          <h4 style={{ margin: '0 0 8px 0', color: '#3C00FF' }}>Total Incidents</h4>
+          <p style={{ margin: 0, fontSize: '30px', fontWeight: 'bold', color: 'black' }}>
             {kpiData.total_incidents || 0}
           </p>
         </div>
         <div style={{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', textAlign: 'center', border: '1px solid #ddd' }}>
-          <h4 style={{ margin: '0 0 8px 0', color: '#495057' }}>Emergency Incidents</h4>
-          <p style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: 'black' }}>
+          <h4 style={{ margin: '0 0 8px 0', color: '#3C00FF' }}>Emergency Incidents</h4>
+          <p style={{ margin: 0, fontSize: '30px', fontWeight: 'bold', color: 'black' }}>
             {kpiData.emergency_incidents_count || 0}
           </p>
         </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
         <div style={{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', textAlign: 'center', border: '1px solid #ddd' }}>
-          <h4 style={{ margin: '0 0 8px 0', color: '#495057' }}>Most Common Event</h4>
-          <p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'black' }}>
+          <h4 style={{ margin: '0 0 8px 0', color: '#3C00FF' }}>Most Common Event</h4>
+          <p style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: 'black' }}>
             {kpiData.most_common_main_event || 'N/A'}
           </p>
         </div>
         <div style={{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', textAlign: 'center', border: '1px solid #ddd' }}>
-          <h4 style={{ margin: '0 0 8px 0', color: '#495057' }}>Avg Daily Incidents</h4>
-          <p style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: 'black' }}>
+          <h4 style={{ margin: '0 0 8px 0', color: '#3C00FF' }}>Avg Daily Incidents</h4>
+          <p style={{ margin: 0, fontSize: '30px', fontWeight: 'bold', color: 'black' }}>
             {kpiData.average_daily_incidents ? kpiData.average_daily_incidents.toFixed(1) : '0.0'}
           </p>
         </div>
@@ -67,16 +68,17 @@ export const createChartConfigs = (data, selectedTemporalTrend) => {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data.temporal}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey={selectedTemporalTrend === 'Hourly' ? 'Hour of Day (24-hour)' : 
-                       selectedTemporalTrend === 'Daily' ? 'Day of Week' :
-                       selectedTemporalTrend === 'Monthly' ? 'Month' : 
-                       selectedTemporalTrend === 'Yearly' ? 'Year' : 'Period'} 
-              angle={selectedTemporalTrend === 'Daily' ? -45 : 0}
-              textAnchor={selectedTemporalTrend === 'Daily' ? 'end' : 'middle'}
+            <XAxis
+              dataKey={selectedTemporalTrend === 'Hourly' ? 'Hour of Day (24-hour)' :
+                selectedTemporalTrend === 'Daily' ? 'Day of Week' :
+                  selectedTemporalTrend === 'Monthly' ? 'Month' :
+                    selectedTemporalTrend === 'Yearly' ? 'Year' : 'Period'}
               height={selectedTemporalTrend === 'Daily' ? 80 : 60}
+
             />
-            <YAxis />
+            <YAxis
+
+            />
             <Tooltip />
             <Line type="monotone" dataKey="Count" stroke="#8884d8" strokeWidth={3} />
           </LineChart>
@@ -92,7 +94,9 @@ export const createChartConfigs = (data, selectedTemporalTrend) => {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data.mainEvent}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="MainEventType" angle={-45} textAnchor="end" height={100} />
+            <XAxis dataKey="MainEventType" angle={-45} textAnchor="end" height={100}
+              tick={{ fontSize: 10 }}
+            />
             <YAxis />
             <Tooltip />
             <Bar dataKey="Count" fill="#82ca9d" />
@@ -126,9 +130,9 @@ export const createChartConfigs = (data, selectedTemporalTrend) => {
           </PieChart>
         </ResponsiveContainer>
       ),
-      legend: data.severity.map((item, index) => ({ 
-        color: CHART_COLORS[index % CHART_COLORS.length], 
-        label: `${item.Severity} (${item.Count})` 
+      legend: data.severity.map((item, index) => ({
+        color: CHART_COLORS[index % CHART_COLORS.length],
+        label: `${item.Severity} (${item.Count})`
       }))
     }
   ];

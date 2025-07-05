@@ -44,7 +44,7 @@ const ControlPanel = ({
   const columnStyle = (paddingLeft = '0px', paddingRight = '8px') => ({
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px',
+    gap: '4px',
     paddingLeft,
     paddingRight,
     minWidth: 0, // allow shrinking
@@ -65,7 +65,7 @@ const ControlPanel = ({
     backgroundColor: '#ddd',
     alignSelf: 'stretch',
     height: 'auto',
-    margin: 0,
+    margin: '0',
     padding: 0
   };
 
