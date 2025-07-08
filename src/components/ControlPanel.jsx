@@ -10,6 +10,7 @@ import ApplyFiltersButton from './ApplyFiltersButton';
 import DistrictDropdown from './DistrictDropdown';
 import TemporalTrendDropdown from './TemporalTrendDropdown';
 import RangeDropdown from './RangeDropdown';
+import '../styles/ControlPanel.css'; // Import your CSS styles
 
 // Animation helpers from CenterButton
 const easeOutQuad = (t) => t * (2 - t);
@@ -270,52 +271,7 @@ const ControlPanel = ({
     <div style={panelStyle}>
       {/* --- Input box style to match dropdown --- */}
       <style>{`
-        .cp-input {
-          flex: 1;
-          padding: 7px 10px;
-          font-size: 12px;
-          background: #fff;
-          border: 2px solid #000;
-          border-radius: 0;
-          outline: none;
-          min-width: 0;
-          box-sizing: border-box;
-          transition: border 0.16s;
-        }
-        .cp-input::placeholder {
-          font-size: 10px;
-        }
-        .cp-input:focus {
-          border: 2.5px solid #111;
-        }
-        .go-button {
-          padding: 7px 10px;
-          font-size: 12px;
-          border: 2px solid #000;
-          border-radius: 3px;
-          color: white;
-          outline: none;
-          cursor: pointer;
-          box-sizing: border-box;
-          transition: all 0.2s ease;
-        }
-        .go-button:enabled {
-          background: black;
-          cursor: pointer;
-        }
-        .go-button:enabled:hover {
-          background: #333;
-          transform: translateY(-1px);
-        }
-        .go-button:enabled:active {
-          transform: translateY(0);
-        }
-        .go-button:disabled {
-          background: #ccc;
-          color: #666;
-          cursor: not-allowed;
-          border-color: #ccc;
-        }
+        
       `}</style>
       <div style={gridStyle}>
         {/* Column 1: Date Range */}
