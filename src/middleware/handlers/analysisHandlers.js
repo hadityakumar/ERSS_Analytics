@@ -357,9 +357,7 @@ export const handleLoadEmergingHotspotsData = async (store) => {
 
     // Center map to emerging hotspots data with custom coordinates
     setTimeout(() => {
-      centerMapToData(store, parsedData);
-      // Or use specific coordinates:
-      // centerMapToCoordinates(store, 8.5782259865, 76.95390701, 10);
+      centerMapToCoordinates(store, 8.503675, 76.987214, 10.23);
     }, 1000);
 
     // Show analysis summary

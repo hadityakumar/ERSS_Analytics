@@ -1,11 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import keralaCitiesData from '../data/kerala_cities.json';
-import Dropdown from './Dropdown'; // Import your shared Dropdown component
+import Dropdown from './Dropdown';
 
 const DistrictDropdown = ({ onSelectionChange }) => {
   const [selectedDistrict, setSelectedDistrict] = useState('Thiruvananthapuram');
-
-  // Get all districts from the Kerala data
   const districts = Object.keys(keralaCitiesData.Kerala);
 
   const handleDistrictSelect = useCallback((district) => {

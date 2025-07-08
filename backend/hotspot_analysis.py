@@ -12,7 +12,7 @@ def perform_hotspot_analysis(start_date=None, end_date=None):
     try:
         # Get the directory where this script is located
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        csv_path = os.path.join(script_dir, 'ps_removed_dt.csv')
+        csv_path = os.path.join(script_dir, 'filtered_data.csv')
         output_path = os.path.join(script_dir, 'hotspot_analysis_results.csv')
         
         print(f"Script directory: {script_dir}")

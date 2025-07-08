@@ -10,9 +10,8 @@ import ApplyFiltersButton from './ApplyFiltersButton';
 import DistrictDropdown from './DistrictDropdown';
 import TemporalTrendDropdown from './TemporalTrendDropdown';
 import RangeDropdown from './RangeDropdown';
-import '../styles/ControlPanel.css'; // Import your CSS styles
+import '../styles/ControlPanel.css';
 
-// Animation helpers from CenterButton
 const easeOutQuad = (t) => t * (2 - t);
 const lerp = (start, end, factor) => start + (end - start) * factor;
 
