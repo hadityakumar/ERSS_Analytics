@@ -1,8 +1,7 @@
 import { processCsvData } from '@kepler.gl/processors';
 import { addDataToMap } from '@kepler.gl/actions';
 import { fetchHotspotData, fetchEmergingHotspotsData } from '../services/apiService';
-import { centerMapToTrivandrum } from '../utils/mapUtils';
-import { generateDatasetId, generateLayerId } from '../utils/mapUtils';
+import { centerMapToCoordinates, centerMapToData, generateDatasetId, generateLayerId } from '../utils/mapUtils';
 
 // Prevent duplicate analysis loading
 let isLoadingHotspots = false;
@@ -138,12 +137,11 @@ export const handleLoadHotspotData = async (store) => {
       })
     );
 
-    // Auto-center map after hotspot analysis
+    // Center map to hotspot data bounds with a delay to ensure data is loaded
     setTimeout(() => {
-      centerMapToTrivandrum(store);
-    }, 500);
+      centerMapToCoordinates(store, 8.5782259865, 76.95390701, 11);
+    }, 1000); // Increased delay to ensure data is fully loaded
 
-    // Notify that hotspot layer is now available and visible
     console.log('Hotspot layer added and visible');
 
   } catch (error) {
@@ -304,7 +302,7 @@ export const handleLoadEmergingHotspotsData = async (store) => {
                     lat: 'latitude',
                     lng: 'longitude'
                   },
-                  isVisible: true, // Start as visible
+                  isVisible: true,
                   visConfig: {
                     opacity: 0.8,
                     thickness: 2,
@@ -357,10 +355,12 @@ export const handleLoadEmergingHotspotsData = async (store) => {
       })
     );
 
-    // Auto-center map after emerging hotspots analysis
-    // setTimeout(() => {
-    //   centerMapToTrivandrum(store);
-    // }, 500);
+    // Center map to emerging hotspots data with custom coordinates
+    setTimeout(() => {
+      centerMapToData(store, parsedData);
+      // Or use specific coordinates:
+      // centerMapToCoordinates(store, 8.5782259865, 76.95390701, 10);
+    }, 1000);
 
     // Show analysis summary
     const features = geojsonData.features;

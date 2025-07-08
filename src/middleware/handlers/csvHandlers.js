@@ -2,7 +2,7 @@ import { processCsvData } from '@kepler.gl/processors';
 import { processingStarted, processingError } from '../../store';
 import { processCsvData as processData, fetchCsvData, fetchFilteredData } from '../services/apiService';
 import { loadDataToKepler } from '../services/dataProcessor';
-import { centerMapToTrivandrum, formatDateTimeRange } from '../utils/mapUtils';
+import { centerMapToCoordinates, formatDateTimeRange } from '../utils/mapUtils';
 
 // Prevent duplicate CSV loading
 let isLoadingInitialData = false;
@@ -61,7 +61,7 @@ export const handleFetchInitialData = async (store) => {
     
     // Auto-center map after initial load
     setTimeout(() => {
-      centerMapToTrivandrum(store);
+      centerMapToCoordinates(store, 8.5782259865, 76.95390701, 9);
       store.dispatch({ type: 'PRELOAD_GEOJSON_LAYER' });
       store.dispatch({ type: 'PRELOAD_DISTRICT_LAYER' });
     }, 1500);
@@ -108,7 +108,7 @@ export const handleFetchFilteredByDate = async (store, { startDate, endDate }) =
     
     // Auto-center map after date filtering
     setTimeout(() => {
-      centerMapToTrivandrum(store);
+      centerMapToCoordinates(store, 8.5782259865, 76.95390701, 9);
       store.dispatch({ type: 'PRELOAD_GEOJSON_LAYER' });
       store.dispatch({ type: 'PRELOAD_DISTRICT_LAYER' });
     }, 1500);
@@ -333,7 +333,7 @@ export const handleFetchFilteredData = async (store, {
     
     // Auto-center map after applying filters
     setTimeout(() => {
-      centerMapToTrivandrum(store);
+      centerMapToCoordinates(store, 8.5782259865, 76.95390701, 9);
       store.dispatch({ type: 'PRELOAD_GEOJSON_LAYER' });
       store.dispatch({ type: 'PRELOAD_DISTRICT_LAYER' });
     }, 1500);

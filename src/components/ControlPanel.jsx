@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { updateMap } from '@kepler.gl/actions';
 import DateRangeSelector from './DateRangeSelector';
 import FilterDropdown from './FilterDropdown';
 import SubtypeDropdown from './SubtypeDropdown';
@@ -9,6 +11,10 @@ import DistrictDropdown from './DistrictDropdown';
 import TemporalTrendDropdown from './TemporalTrendDropdown';
 import RangeDropdown from './RangeDropdown';
 
+// Animation helpers from CenterButton
+const easeOutQuad = (t) => t * (2 - t);
+const lerp = (start, end, factor) => start + (end - start) * factor;
+
 const ControlPanel = ({
   selectedMainTypes, setSelectedMainTypes,
   selectedSubtypes, setSelectedSubtypes,
@@ -18,6 +24,113 @@ const ControlPanel = ({
   selectedDistrict, setSelectedDistrict,
   selectedTemporalTrend, setSelectedTemporalTrend
 }) => {
+  const dispatch = useDispatch();
+  
+  // State for location inputs
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
+  const [zoom, setZoom] = useState('');
+
+  // Get current map state for smooth animation
+  const currentLat = useSelector(state => state.keplerGl?.map?.mapState?.latitude || 8.5241);
+  const currentLng = useSelector(state => state.keplerGl?.map?.mapState?.longitude || 76.9366);
+  const currentZoom = useSelector(state => state.keplerGl?.map?.mapState?.zoom || 10);
+
+  // Center map function with smooth animation like CenterButton
+  const centerMapToCoordinates = useCallback((lat, lng, zoomLevel) => {
+    const targetLat = parseFloat(lat);
+    const targetLng = parseFloat(lng);
+    const targetZoom = parseFloat(zoomLevel);
+
+    // Validate inputs
+    if (isNaN(targetLat) || isNaN(targetLng) || isNaN(targetZoom)) {
+      alert('Please enter valid numbers for latitude, longitude, and zoom.');
+      return;
+    }
+
+    // Validate coordinate ranges
+    if (targetLat < -90 || targetLat > 90) {
+      alert('Latitude must be between -90 and 90 degrees.');
+      return;
+    }
+
+    if (targetLng < -180 || targetLng > 180) {
+      alert('Longitude must be between -180 and 180 degrees.');
+      return;
+    }
+
+    if (targetZoom < 0 || targetZoom > 20) {
+      alert('Zoom level must be between 0 and 20.');
+      return;
+    }
+
+    // Check if already at target position (avoid unnecessary animation)
+    const latDiff = Math.abs(currentLat - targetLat);
+    const lngDiff = Math.abs(currentLng - targetLng);
+    const zoomDiff = Math.abs(currentZoom - targetZoom);
+
+    if (latDiff < 0.001 && lngDiff < 0.001 && zoomDiff < 0.1) {
+      console.log('Already at target coordinates');
+      return;
+    }
+
+    // Smooth animation like CenterButton
+    const duration = 2000; // 2 seconds
+    const startTime = Date.now();
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easedProgress = easeOutQuad(progress);
+
+      // Interpolate between current and target values
+      const animatedLat = lerp(currentLat, targetLat, easedProgress);
+      const animatedLng = lerp(currentLng, targetLng, easedProgress);
+      const animatedZoom = lerp(currentZoom, targetZoom, easedProgress);
+
+      // Dispatch the map update
+      dispatch(updateMap({
+        latitude: animatedLat,
+        longitude: animatedLng,
+        zoom: animatedZoom,
+        bearing: 0,
+        pitch: 0,
+        dragRotate: false,
+        isSplit: false,
+        isViewportSynced: true,
+        isZoomLocked: false,
+        splitMapViewports: []
+      }, 'map'));
+
+      // Continue animation until complete
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        console.log(`Map smoothly centered to: Lat=${targetLat}, Lng=${targetLng}, Zoom=${targetZoom}`);
+      }
+    };
+
+    // Start the animation
+    animate();
+  }, [dispatch, currentLat, currentLng, currentZoom]);
+
+  // Handle GO button click
+  const handleGoClick = useCallback(() => {
+    if (!latitude || !longitude || !zoom) {
+      alert('Please enter latitude, longitude, and zoom values.');
+      return;
+    }
+    
+    centerMapToCoordinates(latitude, longitude, zoom);
+  }, [latitude, longitude, zoom, centerMapToCoordinates]);
+
+  // Handle Enter key press in input fields
+  const handleKeyPress = useCallback((e) => {
+    if (e.key === 'Enter') {
+      handleGoClick();
+    }
+  }, [handleGoClick]);
+
   // Responsive: no fixed height, fills flex container
   const panelStyle = {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -94,7 +207,7 @@ const ControlPanel = ({
   // UPDATED InputRow to accept inputWidth and set flex:none if width is specified
   const InputRow = ({ label, placeholder, type = "text", step, unit, inputWidth }) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-      <label style={labelStyle}>{label}:</label>
+      <label style={labelStyle}>{label}</label>
       <input
         className="cp-input"
         type={type}
@@ -127,6 +240,25 @@ const ControlPanel = ({
         }
         .cp-input:focus {
           border: 2.5px solid #111;
+        }
+        .go-button {
+          padding: 7px 10px;
+          fontSize: 12px;
+          background: black;
+          border: 2px solid #000;
+          color: white;
+          border-radius: 0;
+          outline: none;
+          cursor: pointer;
+          box-sizing: border-box;
+          transition: background 0.2s, transform 0.1s;
+        }
+        .go-button:hover {
+          background: #333;
+          transform: translateY(-1px);
+        }
+        .go-button:active {
+          transform: translateY(0);
         }
       `}</style>
       <div style={gridStyle}>
@@ -179,11 +311,60 @@ const ControlPanel = ({
           <h3 style={headerStyle}>Location</h3>
           <InputRow label="Landmark" placeholder="Search landmark..." />
           <div style={{ height: '1px', backgroundColor: '#ddd', margin: '4px 0' }}></div>
-          {/* Latitude and Longitude with width 50px */}
-          <InputRow label="Latitude" placeholder="00.000000" type="number" step="any" inputWidth="100px" />
-          <InputRow label="Longitude" placeholder="00.000000" type="number" step="any" inputWidth="100px" />
+          
+          {/* Latitude Input with state management */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label style={labelStyle}>Latitude</label>
+            <input
+              className="cp-input"
+              type="number"
+              step="any"
+              placeholder="8.565000"
+              value={latitude}
+              onChange={(e) => setLatitude(e.target.value)}
+              onKeyPress={handleKeyPress}
+              style={{ width: '100px', flex: 'none' }}
+            />
+          </div>
+          
+          {/* Longitude Input with state management */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label style={labelStyle}>Longitude</label>
+            <input
+              className="cp-input"
+              type="number"
+              step="any"
+              placeholder="76.958000"
+              value={longitude}
+              onChange={(e) => setLongitude(e.target.value)}
+              onKeyPress={handleKeyPress}
+              style={{ width: '100px', flex: 'none' }}
+            />
+          </div>
+          
           <div style={{ height: '1px', backgroundColor: '#ddd', margin: '4px 0' }}></div>
-          <InputRow label="Range" placeholder="1.0" type="number" step="0.1" inputWidth="100px" unit="km" />
+          
+          {/* Zoom input with GO button */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label style={labelStyle}>Zoom</label>
+            <input
+              className="cp-input"
+              type="number"
+              step="0.1"
+              placeholder="9.0"
+              value={zoom}
+              onChange={(e) => setZoom(e.target.value)}
+              onKeyPress={handleKeyPress}
+              style={{ width: '65px', flex: 'none' }}
+            />
+            <button
+              className="go-button"
+              onClick={handleGoClick}
+              title="Center map to coordinates"
+            >
+              GO
+            </button>
+          </div>
         </div>
 
         <div style={separatorStyle}></div>
@@ -220,3 +401,4 @@ const ControlPanel = ({
 };
 
 export default ControlPanel;
+

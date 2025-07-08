@@ -28,3 +28,4 @@ dist-ssr
 venv/
 ps_removed_dt.csv
 filtered_data.csv
+hotspot_analysis_results.csv
