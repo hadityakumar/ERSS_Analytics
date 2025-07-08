@@ -3,11 +3,9 @@ import { addDataToMap } from '@kepler.gl/actions';
 import { fetchHotspotData, fetchEmergingHotspotsData } from '../services/apiService';
 import { centerMapToCoordinates, centerMapToData, generateDatasetId, generateLayerId } from '../utils/mapUtils';
 
-// Prevent duplicate analysis loading
 let isLoadingHotspots = false;
 let isLoadingEmergingHotspots = false;
 
-// Helper function to remove existing analysis layers
 const removeExistingAnalysisLayer = (store, layerPattern) => {
   const state = store.getState();
   const keplerState = state.keplerGl?.map;
