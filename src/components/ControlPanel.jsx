@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateMap } from '@kepler.gl/actions';
 import DateRangeSelector from './DateRangeSelector';
@@ -36,43 +36,54 @@ const ControlPanel = ({
   const currentLng = useSelector(state => state.keplerGl?.map?.mapState?.longitude || 76.9366);
   const currentZoom = useSelector(state => state.keplerGl?.map?.mapState?.zoom || 10);
 
+  // Validation logic for GO button
+  const isGoButtonEnabled = useMemo(() => {
+    // Check if all fields have values
+    if (!latitude.trim() || !longitude.trim() || !zoom.trim()) {
+      return false;
+    }
+
+    // Parse values
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+    const zoomLevel = parseFloat(zoom);
+
+    // Check if values are valid numbers
+    if (isNaN(lat) || isNaN(lng) || isNaN(zoomLevel)) {
+      return false;
+    }
+
+    // Check coordinate ranges
+    if (lat < -90 || lat > 90) {
+      return false;
+    }
+
+    if (lng < -180 || lng > 180) {
+      return false;
+    }
+
+    if (zoomLevel < 0 || zoomLevel > 20) {
+      return false;
+    }
+
+    // Check if coordinates are different from current position (avoid unnecessary animation)
+    const latDiff = Math.abs(currentLat - lat);
+    const lngDiff = Math.abs(currentLng - lng);
+    const zoomDiff = Math.abs(currentZoom - zoomLevel);
+
+    // If already at target position, disable button
+    if (latDiff < 0.001 && lngDiff < 0.001 && zoomDiff < 0.1) {
+      return false;
+    }
+
+    return true;
+  }, [latitude, longitude, zoom, currentLat, currentLng, currentZoom]);
+
   // Center map function with smooth animation like CenterButton
   const centerMapToCoordinates = useCallback((lat, lng, zoomLevel) => {
     const targetLat = parseFloat(lat);
     const targetLng = parseFloat(lng);
     const targetZoom = parseFloat(zoomLevel);
-
-    // Validate inputs
-    if (isNaN(targetLat) || isNaN(targetLng) || isNaN(targetZoom)) {
-      alert('Please enter valid numbers for latitude, longitude, and zoom.');
-      return;
-    }
-
-    // Validate coordinate ranges
-    if (targetLat < -90 || targetLat > 90) {
-      alert('Latitude must be between -90 and 90 degrees.');
-      return;
-    }
-
-    if (targetLng < -180 || targetLng > 180) {
-      alert('Longitude must be between -180 and 180 degrees.');
-      return;
-    }
-
-    if (targetZoom < 0 || targetZoom > 20) {
-      alert('Zoom level must be between 0 and 20.');
-      return;
-    }
-
-    // Check if already at target position (avoid unnecessary animation)
-    const latDiff = Math.abs(currentLat - targetLat);
-    const lngDiff = Math.abs(currentLng - targetLng);
-    const zoomDiff = Math.abs(currentZoom - targetZoom);
-
-    if (latDiff < 0.001 && lngDiff < 0.001 && zoomDiff < 0.1) {
-      console.log('Already at target coordinates');
-      return;
-    }
 
     // Smooth animation like CenterButton
     const duration = 2000; // 2 seconds
@@ -116,20 +127,56 @@ const ControlPanel = ({
 
   // Handle GO button click
   const handleGoClick = useCallback(() => {
-    if (!latitude || !longitude || !zoom) {
-      alert('Please enter latitude, longitude, and zoom values.');
+    if (!isGoButtonEnabled) {
       return;
     }
     
     centerMapToCoordinates(latitude, longitude, zoom);
-  }, [latitude, longitude, zoom, centerMapToCoordinates]);
+  }, [latitude, longitude, zoom, centerMapToCoordinates, isGoButtonEnabled]);
 
   // Handle Enter key press in input fields
-  const handleKeyPress = useCallback((e) => {
-    if (e.key === 'Enter') {
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter' && isGoButtonEnabled) {
       handleGoClick();
     }
-  }, [handleGoClick]);
+  }, [handleGoClick, isGoButtonEnabled]);
+
+  // Get tooltip text based on validation state
+  const getTooltipText = useMemo(() => {
+    if (!latitude.trim() || !longitude.trim() || !zoom.trim()) {
+      return 'Please enter latitude, longitude, and zoom values';
+    }
+
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+    const zoomLevel = parseFloat(zoom);
+
+    if (isNaN(lat) || isNaN(lng) || isNaN(zoomLevel)) {
+      return 'Please enter valid numbers';
+    }
+
+    if (lat < -90 || lat > 90) {
+      return 'Latitude must be between -90 and 90 degrees';
+    }
+
+    if (lng < -180 || lng > 180) {
+      return 'Longitude must be between -180 and 180 degrees';
+    }
+
+    if (zoomLevel < 0 || zoomLevel > 20) {
+      return 'Zoom level must be between 0 and 20';
+    }
+
+    const latDiff = Math.abs(currentLat - lat);
+    const lngDiff = Math.abs(currentLng - lng);
+    const zoomDiff = Math.abs(currentZoom - zoomLevel);
+
+    if (latDiff < 0.001 && lngDiff < 0.001 && zoomDiff < 0.1) {
+      return 'Already at target coordinates';
+    }
+
+    return 'Center map to coordinates';
+  }, [latitude, longitude, zoom, currentLat, currentLng, currentZoom]);
 
   // Responsive: no fixed height, fills flex container
   const panelStyle = {
@@ -138,10 +185,10 @@ const ControlPanel = ({
     padding: '15px',
     boxShadow: '0 4px 20px black',
     border: '1px solid black',
-    overflow: 'visible', // Changed from 'auto' to 'visible' to allow dropdowns to extend outside
+    overflow: 'visible',
     width: '100%',
     boxSizing: 'border-box',
-    position: 'relative' // Added for dropdown positioning context
+    position: 'relative'
   };
 
   // Responsive grid: percentages for columns, 1px for separators, 1fr for actions
@@ -160,8 +207,8 @@ const ControlPanel = ({
     gap: '4px',
     paddingLeft,
     paddingRight,
-    minWidth: 0, // allow shrinking
-    position: 'relative' // Added for dropdown positioning
+    minWidth: 0,
+    position: 'relative'
   });
 
   const headerStyle = {
@@ -243,22 +290,31 @@ const ControlPanel = ({
         }
         .go-button {
           padding: 7px 10px;
-          fontSize: 12px;
-          background: black;
+          font-size: 12px;
           border: 2px solid #000;
+          border-radius: 3px;
           color: white;
-          border-radius: 0;
           outline: none;
           cursor: pointer;
           box-sizing: border-box;
-          transition: background 0.2s, transform 0.1s;
+          transition: all 0.2s ease;
         }
-        .go-button:hover {
+        .go-button:enabled {
+          background: black;
+          cursor: pointer;
+        }
+        .go-button:enabled:hover {
           background: #333;
           transform: translateY(-1px);
         }
-        .go-button:active {
+        .go-button:enabled:active {
           transform: translateY(0);
+        }
+        .go-button:disabled {
+          background: #ccc;
+          color: #666;
+          cursor: not-allowed;
+          border-color: #ccc;
         }
       `}</style>
       <div style={gridStyle}>
@@ -319,10 +375,10 @@ const ControlPanel = ({
               className="cp-input"
               type="number"
               step="any"
-              placeholder="8.565000"
+              placeholder="0.000000"
               value={latitude}
               onChange={(e) => setLatitude(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               style={{ width: '100px', flex: 'none' }}
             />
           </div>
@@ -334,10 +390,10 @@ const ControlPanel = ({
               className="cp-input"
               type="number"
               step="any"
-              placeholder="76.958000"
+              placeholder="0.000000"
               value={longitude}
               onChange={(e) => setLongitude(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               style={{ width: '100px', flex: 'none' }}
             />
           </div>
@@ -351,16 +407,17 @@ const ControlPanel = ({
               className="cp-input"
               type="number"
               step="0.1"
-              placeholder="9.0"
+              placeholder="0.0"
               value={zoom}
               onChange={(e) => setZoom(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               style={{ width: '65px', flex: 'none' }}
             />
             <button
               className="go-button"
               onClick={handleGoClick}
-              title="Center map to coordinates"
+              disabled={!isGoButtonEnabled}
+              title={getTooltipText}
             >
               GO
             </button>
@@ -401,4 +458,3 @@ const ControlPanel = ({
 };
 
 export default ControlPanel;
-

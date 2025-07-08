@@ -3,7 +3,7 @@ import keralaCitiesData from '../data/kerala_cities.json';
 import Dropdown from './Dropdown'; // Import your shared Dropdown component
 
 const DistrictDropdown = ({ onSelectionChange }) => {
-  const [selectedDistrict, setSelectedDistrict] = useState('All Districts');
+  const [selectedDistrict, setSelectedDistrict] = useState('Thiruvananthapuram');
 
   // Get all districts from the Kerala data
   const districts = Object.keys(keralaCitiesData.Kerala);
